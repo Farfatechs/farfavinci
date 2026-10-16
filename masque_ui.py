@@ -63,9 +63,10 @@ class MoteurMasque:
         return d
 
 
-class PageMasque(ctk.CTkFrame):
+class PageMasque(ctk.CTkScrollableFrame):
     def __init__(self, parent, app, ui):
-        super().__init__(parent, fg_color="transparent")
+        super().__init__(parent, fg_color="transparent", scrollbar_button_color=ui["BORD"],
+                         scrollbar_button_hover_color=ui["ACCENT"])
         self.app, self.ui = app, ui
         self.moteur = None
         self.clip = None          # infos du clip DaVinci + dimensions

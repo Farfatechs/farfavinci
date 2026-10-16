@@ -214,7 +214,8 @@ class App(ctk.CTk):
         if os.path.exists(icone):
             # CustomTkinter remet son icône après le démarrage : on repasse derrière
             self.after(250, lambda: self.iconbitmap(icone))
-        self.geometry("600x820")
+        # hauteur adaptée à l'écran (barre des tâches comprise)
+        self.geometry(f"600x{min(820, self.winfo_screenheight() - 120)}")
         self.minsize(580, 600)
         self.occupe_flag = False
 
@@ -367,7 +368,11 @@ class App(ctk.CTk):
 
         # --- Action + progression (fixe en bas) ------------------------------------
         bas = ctk.CTkFrame(self, fg_color=FOND)
-        bas.pack(fill="x", padx=20, pady=(8, 16))
+        # collé en bas et placé avant le contenu : le bouton reste visible même si
+        # la fenêtre est plus petite que le contenu (le contenu défile au-dessus)
+        bas.pack(side="bottom", fill="x", padx=20, pady=(8, 16))
+        racine.pack_forget()  # replacé après la barre du bas dans l'ordre d'emballage
+        racine.pack(fill="both", expand=True, padx=12, pady=(10, 0))
         self.bas = bas
         self.bouton = ctk.CTkButton(
             bas, text="Sous-titrer la timeline", height=50, corner_radius=12,
@@ -394,10 +399,10 @@ class App(ctk.CTk):
         self.racine.pack_forget()
         self.page_masque.pack_forget()
         if valeur == "Masque IA":
-            self.page_masque.pack(fill="both", expand=True, padx=12, pady=(10, 0), before=self.bas)
+            self.page_masque.pack(fill="both", expand=True, padx=12, pady=(10, 0))
             self.bouton.configure(text="Suivre le sujet et créer le masque")
         else:
-            self.racine.pack(fill="both", expand=True, padx=12, pady=(10, 0), before=self.bas)
+            self.racine.pack(fill="both", expand=True, padx=12, pady=(10, 0))
             self.afficher_style()
 
     def changer_source(self, valeur):
