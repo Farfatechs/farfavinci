@@ -157,14 +157,14 @@ function commandes.clip_courant(req)
 end
 
 local NOM_DETOURAGE = "Détourage"
+-- Sujet détouré : toujours sur la piste vidéo 2 (créée si besoin ; la 3 est pour farfascript)
+local PISTE_DETOURAGE = 2
 local function piste_detourage(timeline)
-    for i = 1, timeline:GetTrackCount("video") do
-        if timeline:GetTrackName("video", i) == NOM_DETOURAGE then return i end
+    while timeline:GetTrackCount("video") < PISTE_DETOURAGE do
+        timeline:AddTrack("video")
     end
-    timeline:AddTrack("video")
-    local n = timeline:GetTrackCount("video")
-    pcall(function() timeline:SetTrackName("video", n, NOM_DETOURAGE) end)
-    return n
+    pcall(function() timeline:SetTrackName("video", PISTE_DETOURAGE, NOM_DETOURAGE) end)
+    return PISTE_DETOURAGE
 end
 
 -- Importe détourage + cache dans le bin "Masques IA" et pose le détourage

@@ -611,7 +611,7 @@ class App(ctk.CTk):
                     self.msg(f"{res.get('poses')} titres posés, {res.get('rates')} en échec : "
                              f"{res.get('erreur_titre')}", 100, ERREUR)
                 else:
-                    self.msg(f"Terminé  ·  {res.get('poses')} titres animés sur la piste vidéo 2 « Sous-titres »",
+                    self.msg(f"Terminé  ·  {res.get('poses')} titres animés sur la piste vidéo 3 « Sous-titres »",
                              100, OK)
             else:
                 self.msg("Ajout des sous-titres dans DaVinci…", 97)

@@ -18,7 +18,7 @@ graphique. Fait partie de [farfavinci](../), mais s'installe et fonctionne **seu
 
 - Transcription de **toute la timeline** ou de la **sélection I / O**
 - Découpage : **bloc complet**, **phrase par phrase**, **mot par mot**
-- **Sous-titres simples** (piste de sous-titres) ou **titres animés** (piste vidéo 2 « Sous-titres »)
+- **Sous-titres simples** (piste de sous-titres) ou **titres animés** (piste vidéo 3 « Sous-titres »)
 - **Styles en un clic** : Rebond karaoké, Rebond mot à mot, Bulle, Néon, Glissement, Élégant
 - Réglages : police (affichée dans sa propre police), taille, contour, animation (fondu, pop,
   rebond, glissement), entrée / sortie, karaoké avec couleur au choix

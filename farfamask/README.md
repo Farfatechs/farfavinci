@@ -23,7 +23,7 @@ Sans carte NVIDIA, l'installeur s'arrête : farfamask ne peut pas fonctionner.
 - Aperçu instantané, choix de l'image de départ
 - Suivi sur **tout le clip** ou la **sélection I / O**
 - Résultat importé dans DaVinci (bin « Masques IA ») :
-  - **sujet détouré** avec transparence (ProRes 4444), posé sur une piste « Détourage »
+  - **sujet détouré** avec transparence (ProRes 4444), posé sur la piste vidéo 2 « Détourage »
   - **cache noir et blanc** (ProRes 422) pour la page **Color**
 
 ## Installation

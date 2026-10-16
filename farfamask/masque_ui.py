@@ -95,7 +95,7 @@ class PageMasque(ctk.CTkScrollableFrame):
         self.info.pack(fill="x", padx=18)
         U["interrupteur"](c1, "Seulement la sélection (points I / O)",
                           self.selection).pack(anchor="w", padx=18, pady=(8, 2))
-        U["interrupteur"](c1, "Poser le sujet détouré sur la timeline (piste « Détourage »)",
+        U["interrupteur"](c1, "Poser le sujet détouré sur la timeline (piste vidéo 2 « Détourage »)",
                           self.poser).pack(anchor="w", padx=18, pady=(2, 14))
 
         c2 = U["Carte"](self, "Sélection du sujet")

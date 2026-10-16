@@ -190,7 +190,7 @@ end
 -- Titres animés ------------------------------------------------------------
 -- Modèle Fusion "AutoSubs Caption" (projet AutoSubs, licence MIT) importé
 -- depuis caption-bin.drb. Un titre par sous-titre, texte + minutage des mots
--- (karaoké) + réglages du style, posés sur une piste vidéo 2 "Sous-titres".
+-- (karaoké) + réglages du style, posés sur la piste vidéo 3 "Sous-titres".
 
 local DRB = os.getenv("LOCALAPPDATA") .. "\\farfascript\\caption-bin.drb"
 local NOM_MODELE = "AutoSubs Caption"
@@ -224,8 +224,8 @@ local function modele(pool)
     return clip
 end
 
--- Titres animés : toujours sur la piste vidéo 2 (créée si besoin)
-local PISTE_TITRES = 2
+-- Titres animés : toujours sur la piste vidéo 3 (créée si besoin ; la 2 est pour farfamask)
+local PISTE_TITRES = 3
 local function piste_autotexte(timeline)
     while timeline:GetTrackCount("video") < PISTE_TITRES do
         timeline:AddTrack("video")
