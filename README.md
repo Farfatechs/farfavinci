@@ -144,6 +144,23 @@ les demandes arrivent via `request.lua`, les réponses repartent via `Fusion.pre
 | `watcher.pyw` | Ouvre l'application quand le pont démarre |
 | `installer.ps1` / `desinstaller.ps1` | Installation / désinstallation |
 
+## Licence
+
+farfavinci est un logiciel **open source** sous **licence MIT** (voir `LICENSE`).
+Tu peux l'utiliser, le modifier, y ajouter des fonctions et partager ta version, même
+dans un projet commercial, à une seule condition : **garder le fichier `LICENSE`** (et donc la
+mention de l'auteur d'origine) dans ta copie.
+
+Le logiciel est fourni « tel quel », sans garantie.
+
+## Contribuer
+
+Les améliorations sont les bienvenues !
+- **Signaler un bug ou proposer une idée** : onglet **Issues** de cette page.
+- **Proposer du code** : fais un *fork* du dépôt, modifie-le, puis ouvre une *pull request*.
+  Décris ce que tu as changé et comment tu l'as testé.
+- Le code et les commentaires sont en français ; garde ce style pour rester cohérent.
+
 ## Crédits
 
 - Modèle de titres animés (`caption-bin.drb`) et principe du pont :
