@@ -87,15 +87,39 @@ local function tc_en_images(tc, fps)
     return ((tonumber(h) * 60 + tonumber(m)) * 60 + tonumber(s)) * nominal + tonumber(f)
 end
 
--- Clip vidéo sous la tête de lecture (piste la plus haute)
+local function fichier_de(item)
+    local mpi = item and item:GetMediaPoolItem()
+    local chemin = mpi and mpi:GetClipProperty("File Path") or ""
+    return chemin ~= "" and chemin or nil, mpi
+end
+
+-- Clip vidéo sous la tête de lecture : le plus haut qui a un vrai fichier vidéo.
+-- GetCurrentVideoItem renvoie parfois nil (selon la page) ou un titre (piste
+-- « Sous-titres » de farfascript) : dans ces cas on parcourt les pistes nous-mêmes.
+local function clip_sous_tete(timeline, tete)
+    local item = timeline:GetCurrentVideoItem()
+    if item and fichier_de(item) then return item end
+    if not tete then return nil end
+    for piste = timeline:GetTrackCount("video"), 1, -1 do
+        if timeline:GetIsTrackEnabled("video", piste) ~= false then
+            for _, it in ipairs(timeline:GetItemListInTrack("video", piste) or {}) do
+                if it:GetStart() <= tete and tete < it:GetEnd() and fichier_de(it) then
+                    return it
+                end
+            end
+        end
+    end
+    return nil
+end
+
 function commandes.clip_courant(req)
     local _, timeline = contexte()
-    local item = timeline:GetCurrentVideoItem()
-    if not item then error("Place la tête de lecture sur un clip vidéo") end
-    local mpi = item:GetMediaPoolItem()
-    local chemin = mpi and mpi:GetClipProperty("File Path") or ""
-    if chemin == "" then error("Ce clip n'a pas de fichier source (titre, générateur...)") end
     local fps = fps_de(timeline)
+    local item = clip_sous_tete(timeline, tc_en_images(timeline:GetCurrentTimecode(), fps))
+    if not item then
+        error("Aucun clip vidéo sous la tête de lecture : place-la sur un clip (page Edit)")
+    end
+    local chemin, mpi = fichier_de(item)
     local ok, src = pcall(function() return item:GetSourceStartFrame() end)
     if not ok or not src then
         ok, src = pcall(function() return item:GetLeftOffset() end)
