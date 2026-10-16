@@ -23,6 +23,8 @@ from PIL import Image, ImageFilter
 MODELE = "facebook/sam2.1-hiera-base-plus"
 LARGEUR_PROXY = 960   # images envoyées à SAM 2 (il travaille en 1024 de toute façon)
 PAQUET = 120          # images par paquet de propagation (limite la mémoire)
+# bfloat16 : RTX 30 et plus récentes ; float16 sur les cartes plus anciennes
+TYPE = torch.bfloat16 if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else torch.float16
 
 
 def dire(**kw):
@@ -97,7 +99,7 @@ class Moteur:
     def apercu(self, frame, points, boite=None):
         img = Image.open(self.proxy(frame)).convert("RGB")
         pts, lab, b = self.points_proxy(points, boite)
-        with torch.inference_mode(), torch.autocast("cuda", dtype=torch.bfloat16):
+        with torch.inference_mode(), torch.autocast("cuda", dtype=TYPE):
             self.image.set_image(np.array(img))
             masques, scores, _ = self.image.predict(point_coords=pts, point_labels=lab,
                                                     box=b, multimask_output=False)
@@ -128,7 +130,7 @@ class Moteur:
                     os.link(self.proxy(g), cible)
                 except OSError:
                     shutil.copy(self.proxy(g), cible)
-            with torch.inference_mode(), torch.autocast("cuda", dtype=torch.bfloat16):
+            with torch.inference_mode(), torch.autocast("cuda", dtype=TYPE):
                 etat = self.video.init_state(video_path=dossier, offload_video_to_cpu=True)
                 if masque_prec is None:
                     self.video.add_new_points_or_box(etat, frame_idx=0, obj_id=1,
