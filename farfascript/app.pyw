@@ -1,4 +1,4 @@
-"""farfavinci - application autonome (fonctionne avec DaVinci Resolve gratuit)."""
+"""farfascript - sous-titres automatiques pour DaVinci Resolve gratuit (Whisper sur GPU)."""
 import json
 import os
 import subprocess
@@ -206,11 +206,10 @@ class FenetrePolices(ctk.CTkToplevel):
 
 
 class App(ctk.CTk):
-    def __init__(self, mode="tout"):
+    def __init__(self):
         super().__init__(fg_color=FOND)
-        self.mode_fenetre = mode  # "tout" (onglets), "soustitres" ou "masque"
         ctk.set_appearance_mode("dark")
-        nom = {"soustitres": "farfascript", "masque": "farfamask"}.get(mode, "farfavinci")
+        nom = "farfascript"
         self.title(nom)
         icone = os.path.join(DOSSIER, "icon.ico")
         if os.path.exists(icone):
@@ -253,8 +252,7 @@ class App(ctk.CTk):
         gauche.pack(side="left")
         ctk.CTkLabel(gauche, text=nom, font=police(26, True),
                      text_color=TEXTE).pack(anchor="w")
-        sous_titre = {"soustitres": "Sous-titres automatiques", "masque": "Masque IA"}.get(
-            mode, "Sous-titres & masque IA")
+        sous_titre = "Sous-titres automatiques"
         ctk.CTkLabel(gauche, text=sous_titre + "  ·  local  ·  GPU",
                      font=police(12), text_color=DOUX).pack(anchor="w")
         pastille = ctk.CTkFrame(tete, fg_color=CHAMP, corner_radius=20)
@@ -266,10 +264,6 @@ class App(ctk.CTk):
         self.etat_pont.pack(side="left", padx=(0, 14))
 
         # --- Onglets ---------------------------------------------------------------
-        self.onglet = ctk.StringVar(value="Sous-titres")
-        if mode == "tout":  # fenêtres séparées : pas d'onglets
-            segment(self, ["Sous-titres", "Masque IA"], self.onglet, command=self.changer_onglet,
-                    hauteur=38).pack(fill="x", padx=20, pady=(14, 0))
         racine.pack(fill="both", expand=True, padx=12, pady=(10, 0))
 
         # --- Réglages ----------------------------------------------------------
@@ -392,27 +386,12 @@ class App(ctk.CTk):
                                    wraplength=540, justify="left", anchor="w")
         self.statut.pack(fill="x", pady=(8, 0))
 
-        import masque_ui
-        self.page_masque = masque_ui.PageMasque(self, self, globals())
-        if mode == "masque":
-            self.onglet.set("Masque IA")
-            self.after(0, lambda: self.changer_onglet("Masque IA"))
 
         self.appliquer_style("Rebond karaoké")
         self.afficher_style()
         threading.Thread(target=self.surveiller_pont, daemon=True).start()
 
     # -- interface ----------------------------------------------------------------
-    def changer_onglet(self, valeur):
-        self.racine.pack_forget()
-        self.page_masque.pack_forget()
-        if valeur == "Masque IA":
-            self.page_masque.pack(fill="both", expand=True, padx=12, pady=(10, 0))
-            self.bouton.configure(text="Suivre le sujet et créer le masque")
-        else:
-            self.racine.pack(fill="both", expand=True, padx=12, pady=(10, 0))
-            self.afficher_style()
-
     def changer_source(self, valeur):
         timeline = valeur == "Timeline DaVinci"
         self.p_timeline.pack_forget()
@@ -433,8 +412,7 @@ class App(ctk.CTk):
             texte = "Créer les titres animés"
         else:
             texte = "Sous-titrer la timeline"
-        if self.onglet.get() == "Sous-titres":
-            self.bouton.configure(text=texte)
+        self.bouton.configure(text=texte)
 
     def appliquer_style(self, nom):
         st = STYLES[nom]
@@ -542,9 +520,7 @@ class App(ctk.CTk):
             time.sleep(5)
 
     def lancer(self):
-        if self.onglet.get() == "Masque IA":
-            self.page_masque.lancer()
-        elif self.source.get() == "Timeline DaVinci":
+        if self.source.get() == "Timeline DaVinci":
             self.lancer_timeline()
         else:
             self.lancer_fichier()
@@ -576,7 +552,7 @@ class App(ctk.CTk):
     def lancer_fichier(self):
         src = self.fichier.get()
         if not os.path.isfile(src):
-            messagebox.showwarning("farfavinci", "Choisis d'abord un fichier.")
+            messagebox.showwarning("farfascript", "Choisis d'abord un fichier.")
             return
         sec = 0.0
         try:
@@ -665,19 +641,14 @@ def deja_ouverte(port):
 
 
 if __name__ == "__main__":
-    import argparse
-    arguments = argparse.ArgumentParser()
-    arguments.add_argument("--mode", choices=["tout", "soustitres", "masque"], default="tout")
-    mode = arguments.parse_args().mode
-    # une seule fenêtre par mode (les deux fenêtres séparées peuvent cohabiter)
-    if deja_ouverte({"tout": 47813, "soustitres": 47816, "masque": 47817}[mode]):
+    if deja_ouverte(47823):
         sys.exit(0)
     if not os.path.exists(PYTHON):
-        messagebox.showerror("farfavinci", "Installation manquante : lance Installer.bat")
+        messagebox.showerror("farfascript", "Installation manquante : lance Installer.bat")
         sys.exit(1)
     try:  # icône propre dans la barre des tâches (au lieu de celle de Python)
         import ctypes
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Farfatechs.farfavinci")
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Farfatechs.farfascript")
     except Exception:
         pass
-    App(mode).mainloop()
+    App().mainloop()

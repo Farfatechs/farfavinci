@@ -1,175 +1,55 @@
 # farfavinci
 
-**Sous-titres automatiques (farfascript) et masque IA (farfamask) pour DaVinci Resolve — version gratuite.**
+Deux outils **indépendants** pour **DaVinci Resolve gratuit**, qui tournent entièrement sur ton PC :
 
-Les fonctions « Transcription automatique » et « Magic Mask » de DaVinci sont réservées à la
-version Studio (payante). farfavinci les apporte à la version gratuite, en tournant
-**entièrement sur ton PC** grâce à ta carte graphique NVIDIA.
+| | Outil | Ce qu'il fait | Carte graphique |
+|---|---|---|---|
+| 📝 | **[farfascript](farfascript/)** | Sous-titres automatiques (Whisper) : simples ou animés, karaoké, 23 langues | NVIDIA conseillée (marche aussi sans, mais lentement) |
+| 🎭 | **[farfamask](farfamask/)** | Masque IA (SAM 2) : sélection au clic ou au cadre, détourage + cache pour la page Color | **NVIDIA obligatoire** |
 
----
+Ces fonctions (« Transcription automatique » et « Magic Mask ») sont réservées à DaVinci Studio,
+la version payante. farfavinci les apporte à la version gratuite.
 
-## ⚠️ Configuration requise
+**Installe seulement ce dont tu as besoin** : chaque outil a son propre dossier, son propre
+installeur, sa propre application et son propre script dans DaVinci. Tu peux installer l'un,
+l'autre, ou les deux.
 
-| | Minimum | Testé |
-|---|---|---|
-| **Système** | Windows 10 ou 11 (64 bits) | Windows 11 Pro |
-| **Carte graphique** | **NVIDIA uniquement** (CUDA), RTX série 20 ou plus récente conseillée | RTX 4060 Ti 8 Go |
-| **Mémoire graphique (VRAM)** | 6 Go conseillés | 8 Go |
-| **Pilote NVIDIA** | récent (2024 ou plus) | 617.42 |
-| **DaVinci Resolve** | 21.x gratuit | 21.1.1 |
-| **Python** | 3.12 exactement | 3.12.10 |
-| **Espace disque** | environ 12 Go | 11 Go |
-| **Internet** | pour l'installation et le 1er lancement (téléchargement des modèles) | |
+## Configuration commune
 
-**Pas de carte NVIDIA (AMD, Intel, Mac) ?**
-- Les **sous-titres** fonctionnent quand même, sur le processeur, mais beaucoup plus lentement.
-- Le **masque IA ne fonctionne pas** : il n'est pas installé.
-
-Mac et Linux ne sont pas pris en charge.
-
----
-
-## Fonctionnalités
-
-### Sous-titres automatiques (Whisper large-v3)
-- Transcription de **toute la timeline** ou seulement de la **sélection I / O**
-- Découpage : **bloc complet**, **phrase par phrase**, **mot par mot**
-- **Sous-titres simples** (piste de sous-titres) ou **titres animés** (piste vidéo 2)
-- **Styles en un clic** : Rebond karaoké, Rebond mot à mot, Bulle, Néon, Glissement, Élégant
-- Réglages : police (affichée dans sa propre police), taille, contour, animation
-  (fondu, pop, rebond, glissement), entrée / sortie, karaoké avec couleur au choix
-- **23 langues** : français, anglais, espagnol, allemand, italien, portugais, japonais, chinois,
-  coréen, arabe, russe… (police adaptée automatiquement pour le japonais, le chinois, le coréen)
-- Export d'un simple fichier `.srt` depuis n'importe quelle vidéo
-
-### Masque IA (SAM 2 de Meta)
-- Sélection du sujet **au clic** (garder / exclure) ou **en l'encadrant** (cliquer-glisser)
-- Aperçu instantané, suivi sur **tout le clip** ou la **sélection I / O**
-- Résultat importé dans DaVinci (bin « Masques IA ») :
-  - **sujet détouré** avec transparence (ProRes 4444), posé sur une piste « Détourage »
-  - **cache noir et blanc** (ProRes 422) à utiliser dans la page **Color**
-
----
+- Windows 10 ou 11 (64 bits) — Mac et Linux non pris en charge
+- DaVinci Resolve 21 gratuit (testé : 21.1.1)
+- [Python 3.12](https://www.python.org/downloads/) (coche « py launcher » à l'installation)
+- Internet pour l'installation et le premier lancement (téléchargement des modèles d'IA)
 
 ## Installation
 
-1. **Installe Python 3.12** depuis [python.org](https://www.python.org/downloads/)
-   (pendant l'installation, laisse cochée l'option **« py launcher »**).
-2. **Télécharge farfavinci** : bouton vert **Code > Download ZIP** en haut de cette page,
-   puis extrais le ZIP où tu veux.
-3. **Double-clique sur `Installer.bat`**.
-   L'installation vérifie ta configuration, puis télécharge environ 5 Go (10 à 30 minutes
-   selon ta connexion).
-4. **Redémarre DaVinci Resolve** s'il était ouvert.
+1. Bouton vert **Code > Download ZIP** en haut de cette page, puis extrais le ZIP.
+2. Ouvre le dossier de l'outil voulu (**farfascript** ou **farfamask**).
+3. Double-clique sur **`Installer.bat`**.
 
-Le dossier extrait peut être supprimé après l'installation : tout est copié dans
-`%LOCALAPPDATA%\farfavinci`.
+Les détails (configuration, utilisation, dépannage) sont dans le README de chaque dossier.
 
----
+## 100 % local
 
-## Utilisation
-
-1. Dans DaVinci, ouvre ton projet et ta timeline.
-2. Menu **Espace de travail > Scripts**, puis au choix :
-   - **farfascript** : ouvre la fenêtre des sous-titres automatiques ;
-   - **farfamask** : ouvre la fenêtre du masque IA.
-
-   Rien ne s'affiche dans DaVinci : c'est normal, le pont tourne en arrière-plan.
-   La fenêtre choisie s'ouvre toute seule. Les deux fenêtres peuvent être ouvertes en même temps.
-3. Le voyant vert en haut à droite indique que DaVinci est connecté.
-
-Le raccourci **farfavinci** du bureau ouvre la version complète, avec les deux onglets.
-
-### Sous-titres
-Fenêtre **farfascript** : choisis le découpage, la langue, le type (simples ou animés) et un style,
-puis clique sur le gros bouton bleu. Le 1er lancement télécharge le modèle Whisper (environ 3 Go).
-
-### Masque IA
-1. Fenêtre **farfamask**.
-2. Dans DaVinci, place la tête de lecture sur un clip, puis **Récupérer le clip**.
-3. Clique sur le sujet (ou encadre-le). Clic droit pour exclure une zone.
-4. **Suivre le sujet et créer le masque**.
-5. Dans la page **Color**, utilise le clip « …_cache » du bin « Masques IA » comme cache externe.
-
-Conseil : commence par des clips courts (quelques secondes) pour te faire la main.
-
----
-
-## Bon à savoir
-
-- **100 % local** : aucune image ni aucun son n'est envoyé sur Internet. Seuls les modèles d'IA
-  sont téléchargés (depuis Hugging Face) au premier usage.
-- Un petit programme invisible se lance avec Windows pour ouvrir l'application quand tu démarres
-  le pont dans DaVinci. Il est retiré par la désinstallation.
-- **Titres animés et sous-titres simples ne vont pas sur la même piste** : c'est une règle de
-  DaVinci (les titres animés sont des titres Fusion, donc sur une piste vidéo).
-- Les fichiers ProRes du masque sont volumineux : pense à vider
-  `%LOCALAPPDATA%\farfavinci\work` de temps en temps.
-
-## Limites connues
-
-- Le masque est moins précis que le Magic Mask de Studio sur les cheveux fins et le flou de mouvement.
-- Karaoké en arabe / hébreu (écriture de droite à gauche) : affichage non garanti.
-- Nom d'utilisateur Windows avec accents ou caractères spéciaux : le pont peut ne pas trouver ses
-  fichiers (non testé).
-- Clips avec changement de vitesse : le masque ne suit pas la vitesse modifiée.
-
-## Dépannage
-
-| Problème | Solution |
-|---|---|
-| « Pont DaVinci non lancé » | Espace de travail > Scripts > farfascript (ou farfamask) |
-| Scripts farfavinci absents du menu | Redémarre DaVinci après l'installation |
-| Texte en carrés vides | Choisis une police qui contient les caractères de la langue |
-| Les sous-titres ne changent pas après une 2e génération | Coche « Remplacer les anciens sous-titres » |
-| Le masque IA ne démarre pas | Voir `%LOCALAPPDATA%\farfavinci\work\masque_journal.txt` |
-
-## Désinstallation
-
-Double-clique sur **`Desinstaller.bat`** : supprime l'application, le pont, le raccourci, le
-démarrage automatique et les modèles d'IA téléchargés.
-
----
-
-## Comment ça marche
-
-DaVinci gratuit interdit aux programmes extérieurs de piloter la timeline. Un petit script Lua
-résident (`pont.lua`, démarré par l'un des deux scripts du menu) tourne **dans** DaVinci et échange avec l'application par fichiers :
-les demandes arrivent via `request.lua`, les réponses repartent via `Fusion.prefs`.
-
-| Fichier | Rôle |
-|---|---|
-| `app.pyw` | Application (CustomTkinter) |
-| `pont.lua` | Pont résident dans DaVinci (commun aux deux scripts) |
-| `farfascript.lua` / `farfamask.lua` | Les deux entrées du menu Scripts (sous-titres / masque IA) |
-| `bridge.py` | Client du pont côté application |
-| `transcribe.py` | Transcription Whisper (faster-whisper, GPU) |
-| `mask.py` / `masque_ui.py` | Moteur SAM 2 / onglet Masque IA |
-| `watcher.pyw` | Ouvre l'application quand le pont démarre |
-| `installer.ps1` / `desinstaller.ps1` | Installation / désinstallation |
+Aucune image ni aucun son n'est envoyé sur Internet. Seuls les modèles d'IA sont téléchargés
+(depuis Hugging Face) au premier usage.
 
 ## Licence
 
-farfavinci est un logiciel **open source** sous **licence MIT** (voir `LICENSE`).
-Tu peux l'utiliser, le modifier, y ajouter des fonctions et partager ta version, même
-dans un projet commercial, à une seule condition : **garder le fichier `LICENSE`** (et donc la
-mention de l'auteur d'origine) dans ta copie.
-
-Le logiciel est fourni « tel quel », sans garantie.
+Open source sous **licence MIT** (voir `LICENSE`) : tu peux utiliser, modifier, ajouter des
+fonctions et partager ta version, à condition de garder le fichier `LICENSE`.
 
 ## Contribuer
 
-Les améliorations sont les bienvenues !
-- **Signaler un bug ou proposer une idée** : onglet **Issues** de cette page.
-- **Proposer du code** : fais un *fork* du dépôt, modifie-le, puis ouvre une *pull request*.
-  Décris ce que tu as changé et comment tu l'as testé.
-- Le code et les commentaires sont en français ; garde ce style pour rester cohérent.
+- **Bug ou idée** : onglet **Issues** de cette page.
+- **Code** : fais un *fork*, modifie, puis ouvre une *pull request* en expliquant ce que tu as
+  changé et comment tu l'as testé. Le code et les commentaires sont en français.
 
 ## Crédits
 
-- Modèle de titres animés (`caption-bin.drb`) et principe du pont :
-  [AutoSubs](https://github.com/tmoroney/auto-subs) de Tom Moroney, licence MIT (voir `NOTICE-AutoSubs.txt`)
-- Transcription : [faster-whisper](https://github.com/SYSTRAN/faster-whisper) (MIT),
-  modèle [Whisper](https://github.com/openai/whisper) d'OpenAI (MIT)
+- Principe du pont et modèle de titres animés : [AutoSubs](https://github.com/tmoroney/auto-subs)
+  de Tom Moroney (MIT, voir `NOTICE-AutoSubs.txt` dans chaque dossier)
+- Transcription : [faster-whisper](https://github.com/SYSTRAN/faster-whisper) et
+  [Whisper](https://github.com/openai/whisper) d'OpenAI (MIT)
 - Masque : [SAM 2](https://github.com/facebookresearch/sam2) de Meta (Apache 2.0)
 - Interface : [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter) (MIT)

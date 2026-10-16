@@ -11,7 +11,7 @@ import customtkinter as ctk
 from PIL import Image, ImageTk
 
 DOSSIER = os.path.dirname(os.path.abspath(__file__))
-PYTHON_MASQUE = os.path.join(DOSSIER, "venv_mask", "Scripts", "python.exe")
+PYTHON_MASQUE = os.path.join(DOSSIER, "venv", "Scripts", "python.exe")
 SCRIPT_MASQUE = os.path.join(DOSSIER, "mask.py")
 TRAVAIL = os.path.join(DOSSIER, "work")
 TOILE_L, TOILE_H = 556, 313
@@ -140,7 +140,7 @@ class PageMasque(ctk.CTkScrollableFrame):
 
     def moteur_pret(self):
         if not os.path.exists(PYTHON_MASQUE):
-            raise RuntimeError("Le module de masque n'est pas installé (relance installer.ps1)")
+            raise RuntimeError("Le module de masque n'est pas installé (relance Installer.bat)")
         if self.moteur is None or not self.moteur.vivant():
             self.app.msg("Démarrage de l'IA de masque…")
             self.moteur = MoteurMasque(self.progres)

@@ -6,7 +6,7 @@ import re
 import threading
 import time
 
-DOSSIER = os.path.join(os.environ.get("LOCALAPPDATA", ""), "farfavinci")
+DOSSIER = os.path.join(os.environ.get("LOCALAPPDATA", ""), "farfascript")
 MAILBOX = os.path.join(DOSSIER, "bridge")
 REQUETE = os.path.join(MAILBOX, "request.lua")
 PREFS_GLOB = os.path.join(os.environ.get("APPDATA", ""), "Blackmagic Design", "DaVinci Resolve",
@@ -47,8 +47,8 @@ _verrou = threading.Lock()
 
 
 class _VerrouFichier:
-    """Verrou partagé entre processus (les fenêtres Sous-titres et Masque IA
-    peuvent tourner en même temps, mais un seul request.lua doit exister)."""
+    """Verrou partagé entre processus (plusieurs fenêtres ou threads :
+    un seul request.lua doit exister à la fois)."""
 
     def __enter__(self):
         import msvcrt
@@ -95,18 +95,18 @@ def _envoyer(cmd, timeout, **args):
                     texte = f.read().decode("latin-1")
             except OSError:
                 texte = ""
-            rep = _valeur(texte, "ATReply")
+            rep = _valeur(texte, "FSReply")
             if rep and rep.startswith(id_ + ":"):
                 res = _decoder(rep[len(id_) + 1:])
                 if "erreur" in res:
                     raise PontErreur(res["erreur"])
                 return res
-            if not ack and _valeur(texte, "ATAck") == id_:
+            if not ack and _valeur(texte, "FSAck") == id_:
                 ack = True
             if not ack and time.time() - debut > 4:
                 raise PontErreur(
                     "DaVinci ne répond pas. Lance d'abord le pont : "
-                    "Espace de travail > Scripts > farfascript (ou farfamask)")
+                    "Espace de travail > Scripts > farfascript")
             if time.time() - debut > timeout:
                 raise PontErreur("Délai dépassé en attendant DaVinci.")
             time.sleep(0.2)

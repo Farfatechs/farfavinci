@@ -1,19 +1,17 @@
 --[[
-  farfavinci - pont résident pour DaVinci Resolve (gratuit, 21.x)
+  farfascript - sous-titres automatiques pour DaVinci Resolve (gratuit, 21.x)
 
-  Lancé par l'un des deux scripts du menu Espace de travail > Scripts :
-  « farfascript » (sous-titres) ou « farfamask » (masque IA) (variable globale
-  FARFAVINCI_MODE). Un seul pont tourne à la fois : relancer reprend la main.
-  L'application farfavinci lui envoie des demandes par fichier
-  (request.lua) et lit les réponses dans Fusion.prefs.
+  Menu Espace de travail > Scripts > farfascript : démarre ce pont résident et
+  ouvre l'application farfascript. L'application lui envoie des demandes par
+  fichier (request.lua) et lit les réponses dans Fusion.prefs.
   Principe repris d'AutoSubs (MIT) : le Lua de Resolve gratuit n'a ni io ni
   os.execute, mais loadfile, bmd.* et fusion:SetPrefs fonctionnent.
 ]]
 ---@diagnostic disable: undefined-global
 
-local MAILBOX = os.getenv("LOCALAPPDATA") .. "\\farfavinci\\bridge"
+local MAILBOX = os.getenv("LOCALAPPDATA") .. "\\farfascript\\bridge"
 local REQUEST = MAILBOX .. "\\request.lua"
-local NS = "Global.ATBridge."
+local NS = "Global.FarfaScript."
 
 -- base64 en Lua pur (pas d'opérateurs binaires)
 local B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
@@ -78,6 +76,7 @@ function commandes.ping()
         fps = tostring(fps_de(timeline)),
     }
 end
+
 
 function commandes.render_audio(req)
     local projet, timeline = contexte()
@@ -193,7 +192,7 @@ end
 -- depuis caption-bin.drb. Un titre par sous-titre, texte + minutage des mots
 -- (karaoké) + réglages du style, posés sur une piste vidéo 2 "Sous-titres".
 
-local DRB = os.getenv("LOCALAPPDATA") .. "\\farfavinci\\caption-bin.drb"
+local DRB = os.getenv("LOCALAPPDATA") .. "\\farfascript\\caption-bin.drb"
 local NOM_MODELE = "AutoSubs Caption"
 local NOM_PISTE = "Sous-titres"
 
@@ -244,102 +243,6 @@ local function piste_sous_titres(timeline)
     return 1
 end
 
--- Masque IA ------------------------------------------------------------------
-
-local function tc_en_images(tc, fps)
-    local h, m, s, f = tostring(tc):match("(%d+):(%d+):(%d+)[:;](%d+)")
-    if not h then return nil end
-    local nominal = math.floor(fps + 0.5)
-    return ((tonumber(h) * 60 + tonumber(m)) * 60 + tonumber(s)) * nominal + tonumber(f)
-end
-
--- Clip vidéo sous la tête de lecture (piste la plus haute)
-function commandes.clip_courant(req)
-    local _, timeline = contexte()
-    local item = timeline:GetCurrentVideoItem()
-    if not item then error("Place la tête de lecture sur un clip vidéo") end
-    local mpi = item:GetMediaPoolItem()
-    local chemin = mpi and mpi:GetClipProperty("File Path") or ""
-    if chemin == "" then error("Ce clip n'a pas de fichier source (titre, générateur...)") end
-    local fps = fps_de(timeline)
-    local ok, src = pcall(function() return item:GetSourceStartFrame() end)
-    if not ok or not src then
-        ok, src = pcall(function() return item:GetLeftOffset() end)
-    end
-    local piste = 1
-    pcall(function() piste = item:GetTrackTypeAndIndex()[2] end)
-    local tete = tc_en_images(timeline:GetCurrentTimecode(), fps)
-    -- Plage traitée : tout le clip, ou seulement sa partie entre les points I / O
-    local debut, fin = item:GetStart(), item:GetEnd()
-    if req.range == "inout" then
-        local m = lire_marques(timeline)
-        m = m.video or m.audio or {}
-        if m["in"] == nil and m["out"] == nil then
-            error("Pose d'abord un point d'entrée (I) et de sortie (O) sur la timeline")
-        end
-        local t0 = timeline:GetStartFrame()
-        local mi = m["in"] and (m["in"] + t0) or debut
-        local mo = m["out"] and (m["out"] + t0 + 1) or fin  -- le point O est inclus
-        debut, fin = math.max(debut, mi), math.min(fin, mo)
-        if fin <= debut then
-            error("Les points I / O ne recouvrent pas le clip sous la tête de lecture")
-        end
-    end
-    local decal = debut - item:GetStart()
-    return {
-        fichier = chemin,
-        nom = tostring(item:GetName()),
-        source_debut = tostring(math.floor((tonumber(src) or 0) + decal + 0.5)),
-        duree = tostring(fin - debut),
-        debut = tostring(debut),
-        piste = tostring(piste),
-        tete = tostring(tete and (tete - debut) or 0),
-        fps_clip = tostring(mpi:GetClipProperty("FPS")),
-    }
-end
-
-local NOM_DETOURAGE = "Détourage"
-local function piste_detourage(timeline)
-    for i = 1, timeline:GetTrackCount("video") do
-        if timeline:GetTrackName("video", i) == NOM_DETOURAGE then return i end
-    end
-    timeline:AddTrack("video")
-    local n = timeline:GetTrackCount("video")
-    pcall(function() timeline:SetTrackName("video", n, NOM_DETOURAGE) end)
-    return n
-end
-
--- Importe détourage + cache dans le bin "Masques IA" et pose le détourage
--- au-dessus du clip d'origine, sur la piste "Détourage"
-function commandes.add_mask(req)
-    local projet, timeline = contexte()
-    local pool = projet:GetMediaPool()
-    local racine = pool:GetRootFolder()
-    local bin
-    for _, sous in ipairs(racine:GetSubFolderList() or {}) do
-        if sous:GetName() == "Masques IA" then bin = sous end
-    end
-    bin = bin or pool:AddSubFolder(racine, "Masques IA")
-    local avant = pool:GetCurrentFolder()
-    if bin then pool:SetCurrentFolder(bin) end
-    local items = pool:ImportMedia({ req.detourage, req.cache }) or {}
-    if avant then pool:SetCurrentFolder(avant) end
-    if not items[1] then error("Import des masques refusé par DaVinci") end
-    local res = { importes = tostring(#items) }
-    if req.poser == "1" then
-        local piste = piste_detourage(timeline)
-        local n = tonumber(req.n)
-        local poses = pool:AppendToTimeline({ {
-            mediaPoolItem = items[1], mediaType = 1, startFrame = 0, endFrame = n - 1,
-            recordFrame = tonumber(req.debut), trackIndex = piste,
-        } })
-        res.pose = tostring(poses and poses[1] ~= nil)
-        res.piste = tostring(piste)
-    end
-    return res
-end
-
--- Diagnostic : noms des pistes
 function commandes.pistes()
     local _, timeline = contexte()
     local res = {}
@@ -585,6 +488,7 @@ function commandes.add_srt(req)
     }
 end
 
+
 -- Boucle principale ---------------------------------------------------------
 
 local function repondre(id, resultat)
@@ -592,7 +496,7 @@ local function repondre(id, resultat)
     for k, v in pairs(resultat) do
         lignes[#lignes + 1] = k .. "=" .. tostring(v):gsub("[\r\n]+", " ")
     end
-    ecrire_pref("ATReply", id .. ":" .. base64(table.concat(lignes, "\n")))
+    ecrire_pref("FSReply", id .. ":" .. base64(table.concat(lignes, "\n")))
 end
 
 local function main()
@@ -600,16 +504,16 @@ local function main()
     fusion:SetPrefs(NS .. "Owner", jeton)
     bmd.wait(0.3)
     -- Signal de démarrage : le surveillant (watcher.pyw) lance alors l'application
-    -- "jeton|mode" : le surveillant (watcher.pyw) ouvre la fenêtre correspondante
-    ecrire_pref("ATStart", jeton .. "|" .. tostring(rawget(_G, "FARFAVINCI_MODE") or "tout"))
-    print("[farfavinci] Pont démarré. Tu peux utiliser l'application farfavinci.")
+    -- signal de démarrage : le surveillant (watcher.pyw) ouvre l'application
+    ecrire_pref("FSStart", jeton)
+    print("[farfascript] Pont démarré. Tu peux utiliser l'application farfascript.")
     local tick = 0
     while true do
         tick = tick + 1
         if tick % 10 == 0 then
             local ok, owner = pcall(fusion.GetPrefs, fusion, NS .. "Owner")
             if ok and owner ~= jeton then
-                print("[farfavinci] Un autre pont a pris le relais, arrêt.")
+                print("[farfascript] Un autre pont a pris le relais, arrêt.")
                 return
             end
         end
@@ -617,9 +521,9 @@ local function main()
             local chunk = loadfile(REQUEST)
             local ok, req = false, nil
             if chunk then ok, req = pcall(chunk) end
-            if ok and type(req) == "table" and req.id and req.id ~= AUTOTEXTE_LAST then
-                AUTOTEXTE_LAST = req.id
-                ecrire_pref("ATAck", req.id)
+            if ok and type(req) == "table" and req.id and req.id ~= FARFASCRIPT_LAST then
+                FARFASCRIPT_LAST = req.id
+                ecrire_pref("FSAck", req.id)
                 local fn = commandes[req.cmd]
                 local reussi, res = pcall(function()
                     if not fn then error("Commande inconnue : " .. tostring(req.cmd)) end
@@ -628,7 +532,7 @@ local function main()
                 if reussi then
                     repondre(req.id, res or {})
                 else
-                    print("[farfavinci] Erreur : " .. tostring(res))
+                    print("[farfascript] Erreur : " .. tostring(res))
                     repondre(req.id, { erreur = res })
                 end
             end
