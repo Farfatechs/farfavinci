@@ -10,9 +10,20 @@ Deux outils **indépendants** pour **DaVinci Resolve gratuit**, qui tournent ent
 Ces fonctions (« Transcription automatique » et « Magic Mask ») sont réservées à DaVinci Studio,
 la version payante. farfavinci les apporte à la version gratuite.
 
-**Installe seulement ce dont tu as besoin** : chaque outil a son propre dossier, son propre
-installeur, sa propre application et son propre script dans DaVinci. Tu peux installer l'un,
-l'autre, ou les deux.
+## Faut-il installer les deux ?
+
+**Non.** Les deux outils sont **totalement indépendants** et **aucun n'est obligatoire** :
+
+- Tu veux seulement des sous-titres ? Installe **farfascript**, c'est tout.
+- Tu veux seulement le masque IA ? Installe **farfamask**, c'est tout.
+- Tu veux les deux ? Installe-les l'un après l'autre, dans n'importe quel ordre.
+
+Chaque outil a son propre dossier, son propre installeur, sa propre application, son propre
+script dans DaVinci et sa propre désinstallation. L'un ne dépend jamais de l'autre : en installer
+ou en désinstaller un ne change rien au second.
+
+Seule exception pratique : **farfamask exige une carte NVIDIA**. Sans elle, installe seulement
+farfascript (qui fonctionne aussi sans NVIDIA, en plus lent).
 
 ## Configuration commune
 

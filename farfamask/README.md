@@ -1,7 +1,8 @@
 # farfamask — masque IA
 
 Équivalent du Magic Mask pour **DaVinci Resolve gratuit**, avec SAM 2 (Meta) sur ta carte
-graphique. Fait partie de [farfavinci](../), mais s'installe et fonctionne **seul**.
+graphique. Fait partie de [farfavinci](../), mais s'installe et fonctionne **seul** :
+**farfascript n'est pas nécessaire** pour utiliser farfamask.
 
 ## ⚠️ Configuration requise
 

@@ -1,7 +1,8 @@
 # farfascript — sous-titres automatiques
 
 Sous-titres automatiques pour **DaVinci Resolve gratuit**, avec Whisper large-v3 sur ta carte
-graphique. Fait partie de [farfavinci](../), mais s'installe et fonctionne **seul**.
+graphique. Fait partie de [farfavinci](../), mais s'installe et fonctionne **seul** :
+**farfamask n'est pas nécessaire** pour utiliser farfascript.
 
 ## Configuration requise
 
