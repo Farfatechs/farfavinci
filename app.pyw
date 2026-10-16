@@ -1,4 +1,4 @@
-"""Auto Sous-titres - application autonome (fonctionne avec DaVinci Resolve gratuit)."""
+"""farfavinci - application autonome (fonctionne avec DaVinci Resolve gratuit)."""
 import json
 import os
 import subprocess
@@ -209,7 +209,7 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__(fg_color=FOND)
         ctk.set_appearance_mode("dark")
-        self.title("Auto Sous-titres")
+        self.title("farfavinci")
         icone = os.path.join(DOSSIER, "icon.ico")
         if os.path.exists(icone):
             # CustomTkinter remet son icône après le démarrage : on repasse derrière
@@ -249,9 +249,9 @@ class App(ctk.CTk):
         tete.pack(fill="x", padx=20, pady=(16, 0))
         gauche = ctk.CTkFrame(tete, fg_color="transparent")
         gauche.pack(side="left")
-        ctk.CTkLabel(gauche, text="Auto Sous-titres", font=police(26, True),
+        ctk.CTkLabel(gauche, text="farfavinci", font=police(26, True),
                      text_color=TEXTE).pack(anchor="w")
-        ctk.CTkLabel(gauche, text="Whisper large-v3  ·  local  ·  accéléré GPU",
+        ctk.CTkLabel(gauche, text="Sous-titres & masque IA  ·  local  ·  GPU",
                      font=police(12), text_color=DOUX).pack(anchor="w")
         pastille = ctk.CTkFrame(tete, fg_color=CHAMP, corner_radius=20)
         pastille.pack(side="right", pady=6)
@@ -568,7 +568,7 @@ class App(ctk.CTk):
     def lancer_fichier(self):
         src = self.fichier.get()
         if not os.path.isfile(src):
-            messagebox.showwarning("Auto Sous-titres", "Choisis d'abord un fichier.")
+            messagebox.showwarning("farfavinci", "Choisis d'abord un fichier.")
             return
         sec = 0.0
         try:
@@ -660,11 +660,11 @@ if __name__ == "__main__":
     if deja_ouverte():
         sys.exit(0)
     if not os.path.exists(PYTHON):
-        messagebox.showerror("Auto Sous-titres", "Installation manquante : lance installer.ps1")
+        messagebox.showerror("farfavinci", "Installation manquante : lance installer.ps1")
         sys.exit(1)
     try:  # icône propre dans la barre des tâches (au lieu de celle de Python)
         import ctypes
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("AutoTexte.SousTitres")
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Farfatechs.farfavinci")
     except Exception:
         pass
     App().mainloop()

@@ -3,7 +3,7 @@
 #   powershell -ExecutionPolicy Bypass -File installer.ps1
 $ErrorActionPreference = "Stop"
 $src = $PSScriptRoot
-$dest = Join-Path $env:LOCALAPPDATA "AutoTexteResolve"
+$dest = Join-Path $env:LOCALAPPDATA "farfavinci"
 
 function Titre($t) { Write-Host ""; Write-Host "== $t ==" -ForegroundColor Cyan }
 function Ok($t) { Write-Host "  [OK] $t" -ForegroundColor Green }
@@ -42,6 +42,21 @@ if (-not (Test-Path "C:\Program Files\Blackmagic Design\DaVinci Resolve\Resolve.
 $libre = (Get-PSDrive ($env:LOCALAPPDATA.Substring(0, 1))).Free / 1GB
 if ($libre -lt 12) { Alerte ("Espace disque libre : {0:N0} Go (environ 12 Go necessaires)" -f $libre) }
 
+# --- Ancienne version (nommee "AutoTexte") : on la deplace au lieu de tout retelecharger ---
+$ancien = Join-Path $env:LOCALAPPDATA "AutoTexteResolve"
+if ((Test-Path $ancien) -and -not (Test-Path $dest)) {
+    Titre "Mise a jour de l'ancienne version (AutoTexte -> farfavinci)"
+    Get-CimInstance Win32_Process -Filter "Name like 'python%'" |
+        Where-Object { $_.CommandLine -like "*AutoTexteResolve*" } |
+        ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+    Start-Sleep 2
+    Move-Item $ancien $dest
+    Ok "Installation deplacee vers $dest"
+}
+Remove-Item -Force (Join-Path $env:APPDATA "Blackmagic Design\DaVinci Resolve\Support\Fusion\Scripts\Utility\AutoTexte Pont.lua") -ErrorAction SilentlyContinue
+Remove-Item -Force (Join-Path ([Environment]::GetFolderPath("Desktop")) "Auto Sous-titres.lnk") -ErrorAction SilentlyContinue
+Remove-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" "AutoTexteWatcher" -ErrorAction SilentlyContinue
+
 New-Item -ItemType Directory -Force $dest | Out-Null
 
 # --- Sous-titres (Whisper) ----------------------------------------------------------
@@ -79,26 +94,26 @@ foreach ($f in "transcribe.py", "app.pyw", "bridge.py", "watcher.pyw", "mask.py"
 }
 $scripts = Join-Path $env:APPDATA "Blackmagic Design\DaVinci Resolve\Support\Fusion\Scripts\Utility"
 New-Item -ItemType Directory -Force $scripts | Out-Null
-Copy-Item (Join-Path $src "AutoTexte Pont.lua") $scripts -Force
-Ok "Pont installe dans DaVinci (Espace de travail > Scripts > AutoTexte Pont)"
+Copy-Item (Join-Path $src "farfavinci.lua") $scripts -Force
+Ok "Pont installe dans DaVinci (Espace de travail > Scripts > farfavinci)"
 
 # Surveillant invisible : ouvre l'application quand le pont DaVinci demarre
 $pw = "$dest\venv\Scripts\pythonw.exe"
-Set-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" "AutoTexteWatcher" "`"$pw`" `"$dest\watcher.pyw`""
+Set-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" "farfavinci" "`"$pw`" `"$dest\watcher.pyw`""
 Start-Process $pw -ArgumentList "`"$dest\watcher.pyw`""
 Ok "Ouverture automatique de l'application activee"
 
 $sh = New-Object -ComObject WScript.Shell
-$lnk = $sh.CreateShortcut((Join-Path ([Environment]::GetFolderPath("Desktop")) "Auto Sous-titres.lnk"))
+$lnk = $sh.CreateShortcut((Join-Path ([Environment]::GetFolderPath("Desktop")) "farfavinci.lnk"))
 $lnk.TargetPath = $pw
 $lnk.Arguments = "`"$dest\app.pyw`""
 $lnk.WorkingDirectory = $dest
 $lnk.IconLocation = "$dest\icon.ico,0"
 $lnk.Save()
-Ok "Raccourci 'Auto Sous-titres' cree sur le bureau"
+Ok "Raccourci 'farfavinci' cree sur le bureau"
 
 Titre "Installation terminee"
 Write-Host "  1. Ouvre (ou redemarre) DaVinci Resolve"
-Write-Host "  2. Espace de travail > Scripts > AutoTexte Pont"
+Write-Host "  2. Espace de travail > Scripts > farfavinci"
 Write-Host "  3. L'application s'ouvre toute seule"
 Write-Host "  Au premier usage, les modeles d'IA se telechargent (environ 3,5 Go)."

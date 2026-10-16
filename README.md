@@ -63,16 +63,16 @@ Mac et Linux ne sont pas pris en charge.
 4. **Redémarre DaVinci Resolve** s'il était ouvert.
 
 Le dossier extrait peut être supprimé après l'installation : tout est copié dans
-`%LOCALAPPDATA%\AutoTexteResolve`.
+`%LOCALAPPDATA%\farfavinci`.
 
 ---
 
 ## Utilisation
 
 1. Dans DaVinci, ouvre ton projet et ta timeline.
-2. Menu **Espace de travail > Scripts > AutoTexte Pont**.
+2. Menu **Espace de travail > Scripts > farfavinci**.
    Rien ne s'affiche dans DaVinci : c'est normal, le pont tourne en arrière-plan.
-   L'application **Auto Sous-titres** s'ouvre toute seule.
+   L'application **farfavinci** s'ouvre toute seule.
 3. Le voyant vert en haut à droite indique que DaVinci est connecté.
 
 À relancer **une fois par session** de DaVinci.
@@ -101,7 +101,7 @@ Conseil : commence par des clips courts (quelques secondes) pour te faire la mai
 - **Titres animés et sous-titres simples ne vont pas sur la même piste** : c'est une règle de
   DaVinci (les titres animés sont des titres Fusion, donc sur une piste vidéo).
 - Les fichiers ProRes du masque sont volumineux : pense à vider
-  `%LOCALAPPDATA%\AutoTexteResolve\work` de temps en temps.
+  `%LOCALAPPDATA%\farfavinci\work` de temps en temps.
 
 ## Limites connues
 
@@ -115,11 +115,11 @@ Conseil : commence par des clips courts (quelques secondes) pour te faire la mai
 
 | Problème | Solution |
 |---|---|
-| « Pont DaVinci non lancé » | Espace de travail > Scripts > AutoTexte Pont, une fois par session |
-| « AutoTexte Pont » absent du menu Scripts | Redémarre DaVinci après l'installation |
+| « Pont DaVinci non lancé » | Espace de travail > Scripts > farfavinci, une fois par session |
+| « farfavinci » absent du menu Scripts | Redémarre DaVinci après l'installation |
 | Texte en carrés vides | Choisis une police qui contient les caractères de la langue |
 | Les sous-titres ne changent pas après une 2e génération | Coche « Remplacer les anciens sous-titres » |
-| Le masque IA ne démarre pas | Voir `%LOCALAPPDATA%\AutoTexteResolve\work\masque_journal.txt` |
+| Le masque IA ne démarre pas | Voir `%LOCALAPPDATA%\farfavinci\work\masque_journal.txt` |
 
 ## Désinstallation
 
@@ -131,13 +131,13 @@ démarrage automatique et les modèles d'IA téléchargés.
 ## Comment ça marche
 
 DaVinci gratuit interdit aux programmes extérieurs de piloter la timeline. Un petit script Lua
-résident (`AutoTexte Pont.lua`) tourne **dans** DaVinci et échange avec l'application par fichiers :
+résident (`farfavinci.lua`) tourne **dans** DaVinci et échange avec l'application par fichiers :
 les demandes arrivent via `request.lua`, les réponses repartent via `Fusion.prefs`.
 
 | Fichier | Rôle |
 |---|---|
 | `app.pyw` | Application (CustomTkinter) |
-| `AutoTexte Pont.lua` | Pont résident dans DaVinci |
+| `farfavinci.lua` | Pont résident dans DaVinci |
 | `bridge.py` | Client du pont côté application |
 | `transcribe.py` | Transcription Whisper (faster-whisper, GPU) |
 | `mask.py` / `masque_ui.py` | Moteur SAM 2 / onglet Masque IA |

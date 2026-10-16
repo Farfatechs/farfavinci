@@ -6,7 +6,7 @@ import re
 import threading
 import time
 
-DOSSIER = os.path.join(os.environ.get("LOCALAPPDATA", ""), "AutoTexteResolve")
+DOSSIER = os.path.join(os.environ.get("LOCALAPPDATA", ""), "farfavinci")
 MAILBOX = os.path.join(DOSSIER, "bridge")
 REQUETE = os.path.join(MAILBOX, "request.lua")
 PREFS_GLOB = os.path.join(os.environ.get("APPDATA", ""), "Blackmagic Design", "DaVinci Resolve",
@@ -83,7 +83,7 @@ def _envoyer(cmd, timeout, **args):
             if not ack and time.time() - debut > 4:
                 raise PontErreur(
                     "DaVinci ne répond pas. Lance d'abord le pont : "
-                    "Espace de travail > Scripts > AutoTexte Pont")
+                    "Espace de travail > Scripts > farfavinci")
             if time.time() - debut > timeout:
                 raise PontErreur("Délai dépassé en attendant DaVinci.")
             time.sleep(0.2)

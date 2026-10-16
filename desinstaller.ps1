@@ -1,17 +1,26 @@
-# farfavinci - desinstallation complete
-$dest = Join-Path $env:LOCALAPPDATA "AutoTexteResolve"
+# farfavinci - desinstallation complete (retire aussi l'ancienne version "AutoTexte")
+$dossiers = @((Join-Path $env:LOCALAPPDATA "farfavinci"), (Join-Path $env:LOCALAPPDATA "AutoTexteResolve"))
+$utility = Join-Path $env:APPDATA "Blackmagic Design\DaVinci Resolve\Support\Fusion\Scripts\Utility"
+$bureau = [Environment]::GetFolderPath("Desktop")
+$run = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
 
 Write-Host "Arret de l'application et du surveillant..."
 Get-CimInstance Win32_Process -Filter "Name like 'python%'" |
-    Where-Object { $_.CommandLine -like "*AutoTexteResolve*" } |
+    Where-Object { $_.CommandLine -like "*\farfavinci\*" -or $_.CommandLine -like "*AutoTexteResolve*" } |
     ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
 Start-Sleep 1
 
 Write-Host "Suppression des fichiers..."
-Remove-Item -Recurse -Force $dest -ErrorAction SilentlyContinue
-Remove-Item -Force (Join-Path $env:APPDATA "Blackmagic Design\DaVinci Resolve\Support\Fusion\Scripts\Utility\AutoTexte Pont.lua") -ErrorAction SilentlyContinue
-Remove-Item -Force (Join-Path ([Environment]::GetFolderPath("Desktop")) "Auto Sous-titres.lnk") -ErrorAction SilentlyContinue
-Remove-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" "AutoTexteWatcher" -ErrorAction SilentlyContinue
+foreach ($d in $dossiers) { Remove-Item -Recurse -Force $d -ErrorAction SilentlyContinue }
+foreach ($f in "farfavinci.lua", "AutoTexte Pont.lua") {
+    Remove-Item -Force (Join-Path $utility $f) -ErrorAction SilentlyContinue
+}
+foreach ($f in "farfavinci.lnk", "Auto Sous-titres.lnk") {
+    Remove-Item -Force (Join-Path $bureau $f) -ErrorAction SilentlyContinue
+}
+foreach ($k in "farfavinci", "AutoTexteWatcher") {
+    Remove-ItemProperty $run $k -ErrorAction SilentlyContinue
+}
 Remove-Item -Recurse -Force "HKCU:\Software\Classes\autotexte" -ErrorAction SilentlyContinue
 
 Write-Host "Suppression des modeles d'IA telecharges..."

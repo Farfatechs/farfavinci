@@ -1,15 +1,15 @@
 --[[
-  AutoTexte Pont - script résident pour DaVinci Resolve (gratuit, 21.x)
+  farfavinci - script résident pour DaVinci Resolve (gratuit, 21.x)
 
-  Lancer une fois par session : Espace de travail > Scripts > AutoTexte Pont
-  L'application "Auto Sous-titres" lui envoie des demandes par fichier
+  Lancer une fois par session : Espace de travail > Scripts > farfavinci
+  L'application farfavinci lui envoie des demandes par fichier
   (request.lua) et lit les réponses dans Fusion.prefs.
   Principe repris d'AutoSubs (MIT) : le Lua de Resolve gratuit n'a ni io ni
   os.execute, mais loadfile, bmd.* et fusion:SetPrefs fonctionnent.
 ]]
 ---@diagnostic disable: undefined-global
 
-local MAILBOX = os.getenv("LOCALAPPDATA") .. "\\AutoTexteResolve\\bridge"
+local MAILBOX = os.getenv("LOCALAPPDATA") .. "\\farfavinci\\bridge"
 local REQUEST = MAILBOX .. "\\request.lua"
 local NS = "Global.ATBridge."
 
@@ -189,9 +189,9 @@ end
 -- Titres animés ------------------------------------------------------------
 -- Modèle Fusion "AutoSubs Caption" (projet AutoSubs, licence MIT) importé
 -- depuis caption-bin.drb. Un titre par sous-titre, texte + minutage des mots
--- (karaoké) + réglages du style, posés sur une piste vidéo "AutoTexte".
+-- (karaoké) + réglages du style, posés sur une piste vidéo 2 "Sous-titres".
 
-local DRB = os.getenv("LOCALAPPDATA") .. "\\AutoTexteResolve\\caption-bin.drb"
+local DRB = os.getenv("LOCALAPPDATA") .. "\\farfavinci\\caption-bin.drb"
 local NOM_MODELE = "AutoSubs Caption"
 local NOM_PISTE = "Sous-titres"
 
@@ -599,14 +599,14 @@ local function main()
     bmd.wait(0.3)
     -- Signal de démarrage : le surveillant (watcher.pyw) lance alors l'application
     ecrire_pref("ATStart", jeton)
-    print("[AutoTexte] Pont démarré. Tu peux utiliser l'application Auto Sous-titres.")
+    print("[farfavinci] Pont démarré. Tu peux utiliser l'application farfavinci.")
     local tick = 0
     while true do
         tick = tick + 1
         if tick % 10 == 0 then
             local ok, owner = pcall(fusion.GetPrefs, fusion, NS .. "Owner")
             if ok and owner ~= jeton then
-                print("[AutoTexte] Un autre pont a pris le relais, arrêt.")
+                print("[farfavinci] Un autre pont a pris le relais, arrêt.")
                 return
             end
         end
@@ -625,7 +625,7 @@ local function main()
                 if reussi then
                     repondre(req.id, res or {})
                 else
-                    print("[AutoTexte] Erreur : " .. tostring(res))
+                    print("[farfavinci] Erreur : " .. tostring(res))
                     repondre(req.id, { erreur = res })
                 end
             end
