@@ -161,32 +161,6 @@ function commandes.render_audio(req)
     error("Rendu terminé mais fichier audio introuvable dans " .. req.dir)
 end
 
--- Liste les clips audio de la timeline (plan B : l'application reconstruit
--- l'audio elle-même à partir des fichiers sources, sans passer par le rendu).
-function commandes.clips()
-    local _, timeline = contexte()
-    local fps = fps_de(timeline)
-    local debut = timeline:GetStartFrame()
-    local res = { fps = tostring(fps) }
-    local n = 0
-    for piste = 1, timeline:GetTrackCount("audio") do
-        for _, it in ipairs(timeline:GetItemListInTrack("audio", piste) or {}) do
-            local mpi = it:GetMediaPoolItem()
-            local chemin = mpi and mpi:GetClipProperty("File Path") or ""
-            if chemin ~= "" then
-                local deb = (it:GetStart() - debut) / fps
-                local fin = (it:GetEnd() - debut) / fps
-                local ok, src = pcall(function() return it:GetLeftOffset() end)
-                local src_s = ((ok and tonumber(src)) or 0) / fps
-                n = n + 1
-                res["clip" .. n] = string.format("%d|%.3f|%.3f|%.3f|%s", piste, deb, fin, src_s, chemin)
-            end
-        end
-    end
-    res.nb = tostring(n)
-    return res
-end
-
 -- Titres animés ------------------------------------------------------------
 -- Modèle Fusion "AutoSubs Caption" (projet AutoSubs, licence MIT) importé
 -- depuis caption-bin.drb. Un titre par sous-titre, texte + minutage des mots
@@ -241,19 +215,6 @@ local function piste_sous_titres(timeline)
     end
     pcall(function() timeline:SetTrackName("subtitle", 1, NOM_PISTE) end)
     return 1
-end
-
-function commandes.pistes()
-    local _, timeline = contexte()
-    local res = {}
-    for _, genre in ipairs({ "video", "audio", "subtitle" }) do
-        local noms = {}
-        for i = 1, timeline:GetTrackCount(genre) do
-            noms[#noms + 1] = i .. ":" .. tostring(timeline:GetTrackName(genre, i))
-        end
-        res[genre] = table.concat(noms, ", ")
-    end
-    return res
 end
 
 local function nb_car(s)
@@ -428,39 +389,6 @@ function commandes.add_captions(req)
         rates = tostring(rates),
         erreur_titre = premiere_erreur or "",
     }
-end
-
--- Diagnostic : liste les clips de la piste de sous-titres
-function commandes.inspecter()
-    local _, timeline = contexte()
-    local fps = fps_de(timeline)
-    local debut = timeline:GetStartFrame()
-    local res = { pistes = tostring(timeline:GetTrackCount("subtitle")) }
-    local n = 0
-    for piste = 1, timeline:GetTrackCount("subtitle") do
-        for _, it in ipairs(timeline:GetItemListInTrack("subtitle", piste) or {}) do
-            n = n + 1
-            if n <= 30 then
-                res["sub" .. n] = string.format("%d|%.2f|%.2f|%s", piste,
-                    (it:GetStart() - debut) / fps, (it:GetEnd() - debut) / fps, tostring(it:GetName()))
-            end
-        end
-    end
-    res.total = tostring(n)
-    return res
-end
-
--- Diagnostic : ce que DaVinci renvoie pour les points I / O
-function commandes.marques()
-    local _, timeline = contexte()
-    local mio = lire_marques(timeline)
-    local res = { debut = tostring(timeline:GetStartFrame()), fin = tostring(timeline:GetEndFrame()) }
-    for genre, t in pairs(mio) do
-        if type(t) == "table" then
-            res[genre] = tostring(t["in"]) .. "-" .. tostring(t["out"])
-        end
-    end
-    return res
 end
 
 function commandes.add_srt(req)

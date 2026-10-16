@@ -197,8 +197,6 @@ function commandes.add_mask(req)
     return res
 end
 
--- Diagnostic : noms des pistes
-
 -- Boucle principale ---------------------------------------------------------
 
 local function repondre(id, resultat)

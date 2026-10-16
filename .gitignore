@@ -1,8 +1,4 @@
 __pycache__/
 *.pyc
-work/
 venv/
-venv_mask/
-autosub code/
-# ancien script pour DaVinci Studio uniquement, remplacé par le pont
-Auto Sous-titres.py
+work/

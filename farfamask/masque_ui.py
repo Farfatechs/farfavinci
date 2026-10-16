@@ -1,4 +1,4 @@
-"""Onglet « Masque IA » : sélection d'un sujet au clic, suivi SAM 2, retour dans DaVinci."""
+"""Page « Masque IA » de farfamask : sélection d'un sujet au clic, suivi SAM 2, retour dans DaVinci."""
 import json
 import os
 import queue
