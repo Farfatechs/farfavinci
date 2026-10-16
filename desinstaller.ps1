@@ -12,7 +12,7 @@ Start-Sleep 1
 
 Write-Host "Suppression des fichiers..."
 foreach ($d in $dossiers) { Remove-Item -Recurse -Force $d -ErrorAction SilentlyContinue }
-foreach ($f in "farfavinci.lua", "AutoTexte Pont.lua") {
+foreach ($f in "farfascript.lua", "farfamask.lua", "farfavinci Sous-titres.lua", "farfavinci Masque IA.lua", "farfavinci.lua", "AutoTexte Pont.lua") {
     Remove-Item -Force (Join-Path $utility $f) -ErrorAction SilentlyContinue
 }
 foreach ($f in "farfavinci.lnk", "Auto Sous-titres.lnk") {

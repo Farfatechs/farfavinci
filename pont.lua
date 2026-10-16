@@ -1,7 +1,9 @@
 --[[
-  farfavinci - script résident pour DaVinci Resolve (gratuit, 21.x)
+  farfavinci - pont résident pour DaVinci Resolve (gratuit, 21.x)
 
-  Lancer une fois par session : Espace de travail > Scripts > farfavinci
+  Lancé par l'un des deux scripts du menu Espace de travail > Scripts :
+  « farfascript » (sous-titres) ou « farfamask » (masque IA) (variable globale
+  FARFAVINCI_MODE). Un seul pont tourne à la fois : relancer reprend la main.
   L'application farfavinci lui envoie des demandes par fichier
   (request.lua) et lit les réponses dans Fusion.prefs.
   Principe repris d'AutoSubs (MIT) : le Lua de Resolve gratuit n'a ni io ni
@@ -598,7 +600,8 @@ local function main()
     fusion:SetPrefs(NS .. "Owner", jeton)
     bmd.wait(0.3)
     -- Signal de démarrage : le surveillant (watcher.pyw) lance alors l'application
-    ecrire_pref("ATStart", jeton)
+    -- "jeton|mode" : le surveillant (watcher.pyw) ouvre la fenêtre correspondante
+    ecrire_pref("ATStart", jeton .. "|" .. tostring(rawget(_G, "FARFAVINCI_MODE") or "tout"))
     print("[farfavinci] Pont démarré. Tu peux utiliser l'application farfavinci.")
     local tick = 0
     while true do

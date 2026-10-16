@@ -1,6 +1,6 @@
 # farfavinci
 
-**Sous-titres automatiques et masque IA pour DaVinci Resolve — version gratuite.**
+**Sous-titres automatiques (farfascript) et masque IA (farfamask) pour DaVinci Resolve — version gratuite.**
 
 Les fonctions « Transcription automatique » et « Magic Mask » de DaVinci sont réservées à la
 version Studio (payante). farfavinci les apporte à la version gratuite, en tournant
@@ -70,19 +70,22 @@ Le dossier extrait peut être supprimé après l'installation : tout est copié 
 ## Utilisation
 
 1. Dans DaVinci, ouvre ton projet et ta timeline.
-2. Menu **Espace de travail > Scripts > farfavinci**.
+2. Menu **Espace de travail > Scripts**, puis au choix :
+   - **farfascript** : ouvre la fenêtre des sous-titres automatiques ;
+   - **farfamask** : ouvre la fenêtre du masque IA.
+
    Rien ne s'affiche dans DaVinci : c'est normal, le pont tourne en arrière-plan.
-   L'application **farfavinci** s'ouvre toute seule.
+   La fenêtre choisie s'ouvre toute seule. Les deux fenêtres peuvent être ouvertes en même temps.
 3. Le voyant vert en haut à droite indique que DaVinci est connecté.
 
-À relancer **une fois par session** de DaVinci.
+Le raccourci **farfavinci** du bureau ouvre la version complète, avec les deux onglets.
 
 ### Sous-titres
-Onglet **Sous-titres** : choisis le découpage, la langue, le type (simples ou animés) et un style,
+Fenêtre **farfascript** : choisis le découpage, la langue, le type (simples ou animés) et un style,
 puis clique sur le gros bouton bleu. Le 1er lancement télécharge le modèle Whisper (environ 3 Go).
 
 ### Masque IA
-1. Onglet **Masque IA**.
+1. Fenêtre **farfamask**.
 2. Dans DaVinci, place la tête de lecture sur un clip, puis **Récupérer le clip**.
 3. Clique sur le sujet (ou encadre-le). Clic droit pour exclure une zone.
 4. **Suivre le sujet et créer le masque**.
@@ -115,8 +118,8 @@ Conseil : commence par des clips courts (quelques secondes) pour te faire la mai
 
 | Problème | Solution |
 |---|---|
-| « Pont DaVinci non lancé » | Espace de travail > Scripts > farfavinci, une fois par session |
-| « farfavinci » absent du menu Scripts | Redémarre DaVinci après l'installation |
+| « Pont DaVinci non lancé » | Espace de travail > Scripts > farfascript (ou farfamask) |
+| Scripts farfavinci absents du menu | Redémarre DaVinci après l'installation |
 | Texte en carrés vides | Choisis une police qui contient les caractères de la langue |
 | Les sous-titres ne changent pas après une 2e génération | Coche « Remplacer les anciens sous-titres » |
 | Le masque IA ne démarre pas | Voir `%LOCALAPPDATA%\farfavinci\work\masque_journal.txt` |
@@ -131,13 +134,14 @@ démarrage automatique et les modèles d'IA téléchargés.
 ## Comment ça marche
 
 DaVinci gratuit interdit aux programmes extérieurs de piloter la timeline. Un petit script Lua
-résident (`farfavinci.lua`) tourne **dans** DaVinci et échange avec l'application par fichiers :
+résident (`pont.lua`, démarré par l'un des deux scripts du menu) tourne **dans** DaVinci et échange avec l'application par fichiers :
 les demandes arrivent via `request.lua`, les réponses repartent via `Fusion.prefs`.
 
 | Fichier | Rôle |
 |---|---|
 | `app.pyw` | Application (CustomTkinter) |
-| `farfavinci.lua` | Pont résident dans DaVinci |
+| `pont.lua` | Pont résident dans DaVinci (commun aux deux scripts) |
+| `farfascript.lua` / `farfamask.lua` | Les deux entrées du menu Scripts (sous-titres / masque IA) |
 | `bridge.py` | Client du pont côté application |
 | `transcribe.py` | Transcription Whisper (faster-whisper, GPU) |
 | `mask.py` / `masque_ui.py` | Moteur SAM 2 / onglet Masque IA |

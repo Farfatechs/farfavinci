@@ -46,9 +46,32 @@ def _decoder(b64):
 _verrou = threading.Lock()
 
 
+class _VerrouFichier:
+    """Verrou partagé entre processus (les fenêtres Sous-titres et Masque IA
+    peuvent tourner en même temps, mais un seul request.lua doit exister)."""
+
+    def __enter__(self):
+        import msvcrt
+        os.makedirs(MAILBOX, exist_ok=True)
+        self.f = open(os.path.join(MAILBOX, "verrou"), "a+")
+        while True:
+            try:
+                self.f.seek(0)
+                msvcrt.locking(self.f.fileno(), msvcrt.LK_NBLCK, 1)
+                return self
+            except OSError:
+                time.sleep(0.1)
+
+    def __exit__(self, *_):
+        import msvcrt
+        self.f.seek(0)
+        msvcrt.locking(self.f.fileno(), msvcrt.LK_UNLCK, 1)
+        self.f.close()
+
+
 def envoyer(cmd, timeout=30, **args):
     """Envoie une commande au pont et renvoie le dictionnaire de réponse."""
-    with _verrou:  # une seule demande à la fois (un seul request.lua)
+    with _verrou, _VerrouFichier():  # une seule demande à la fois (un seul request.lua)
         return _envoyer(cmd, timeout, **args)
 
 
@@ -83,7 +106,7 @@ def _envoyer(cmd, timeout, **args):
             if not ack and time.time() - debut > 4:
                 raise PontErreur(
                     "DaVinci ne répond pas. Lance d'abord le pont : "
-                    "Espace de travail > Scripts > farfavinci")
+                    "Espace de travail > Scripts > farfascript (ou farfamask)")
             if time.time() - debut > timeout:
                 raise PontErreur("Délai dépassé en attendant DaVinci.")
             time.sleep(0.2)

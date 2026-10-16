@@ -89,13 +89,19 @@ if ($avecMasque) {
 # --- Fichiers, pont DaVinci, demarrage --------------------------------------------
 Titre "3/3 Application, pont DaVinci et raccourci"
 foreach ($f in "transcribe.py", "app.pyw", "bridge.py", "watcher.pyw", "mask.py", "masque_ui.py",
-               "icon.ico", "caption-bin.drb", "NOTICE-AutoSubs.txt") {
+               "pont.lua", "icon.ico", "caption-bin.drb", "NOTICE-AutoSubs.txt") {
     Copy-Item (Join-Path $src $f) $dest -Force
 }
+# Deux scripts dans le menu de DaVinci (ils demarrent le pont commun pont.lua)
 $scripts = Join-Path $env:APPDATA "Blackmagic Design\DaVinci Resolve\Support\Fusion\Scripts\Utility"
 New-Item -ItemType Directory -Force $scripts | Out-Null
-Copy-Item (Join-Path $src "farfavinci.lua") $scripts -Force
-Ok "Pont installe dans DaVinci (Espace de travail > Scripts > farfavinci)"
+foreach ($f in "farfavinci.lua", "farfavinci Sous-titres.lua", "farfavinci Masque IA.lua") {
+    Remove-Item -Force (Join-Path $scripts $f) -ErrorAction SilentlyContinue   # anciens noms
+}
+foreach ($f in "farfascript.lua", "farfamask.lua") {
+    Copy-Item (Join-Path $src $f) $scripts -Force
+}
+Ok "Scripts installes dans DaVinci : Espace de travail > Scripts > farfascript (sous-titres) / farfamask (masque IA)"
 
 # Surveillant invisible : ouvre l'application quand le pont DaVinci demarre
 $pw = "$dest\venv\Scripts\pythonw.exe"
@@ -114,6 +120,6 @@ Ok "Raccourci 'farfavinci' cree sur le bureau"
 
 Titre "Installation terminee"
 Write-Host "  1. Ouvre (ou redemarre) DaVinci Resolve"
-Write-Host "  2. Espace de travail > Scripts > farfavinci"
-Write-Host "  3. L'application s'ouvre toute seule"
+Write-Host "  2. Espace de travail > Scripts > farfascript (sous-titres) ou farfamask (masque IA)"
+Write-Host "  3. La fenetre correspondante s'ouvre toute seule"
 Write-Host "  Au premier usage, les modeles d'IA se telechargent (environ 3,5 Go)."

@@ -206,10 +206,12 @@ class FenetrePolices(ctk.CTkToplevel):
 
 
 class App(ctk.CTk):
-    def __init__(self):
+    def __init__(self, mode="tout"):
         super().__init__(fg_color=FOND)
+        self.mode_fenetre = mode  # "tout" (onglets), "soustitres" ou "masque"
         ctk.set_appearance_mode("dark")
-        self.title("farfavinci")
+        nom = {"soustitres": "farfascript", "masque": "farfamask"}.get(mode, "farfavinci")
+        self.title(nom)
         icone = os.path.join(DOSSIER, "icon.ico")
         if os.path.exists(icone):
             # CustomTkinter remet son icône après le démarrage : on repasse derrière
@@ -249,9 +251,11 @@ class App(ctk.CTk):
         tete.pack(fill="x", padx=20, pady=(16, 0))
         gauche = ctk.CTkFrame(tete, fg_color="transparent")
         gauche.pack(side="left")
-        ctk.CTkLabel(gauche, text="farfavinci", font=police(26, True),
+        ctk.CTkLabel(gauche, text=nom, font=police(26, True),
                      text_color=TEXTE).pack(anchor="w")
-        ctk.CTkLabel(gauche, text="Sous-titres & masque IA  ·  local  ·  GPU",
+        sous_titre = {"soustitres": "Sous-titres automatiques", "masque": "Masque IA"}.get(
+            mode, "Sous-titres & masque IA")
+        ctk.CTkLabel(gauche, text=sous_titre + "  ·  local  ·  GPU",
                      font=police(12), text_color=DOUX).pack(anchor="w")
         pastille = ctk.CTkFrame(tete, fg_color=CHAMP, corner_radius=20)
         pastille.pack(side="right", pady=6)
@@ -263,8 +267,9 @@ class App(ctk.CTk):
 
         # --- Onglets ---------------------------------------------------------------
         self.onglet = ctk.StringVar(value="Sous-titres")
-        segment(self, ["Sous-titres", "Masque IA"], self.onglet, command=self.changer_onglet,
-                hauteur=38).pack(fill="x", padx=20, pady=(14, 0))
+        if mode == "tout":  # fenêtres séparées : pas d'onglets
+            segment(self, ["Sous-titres", "Masque IA"], self.onglet, command=self.changer_onglet,
+                    hauteur=38).pack(fill="x", padx=20, pady=(14, 0))
         racine.pack(fill="both", expand=True, padx=12, pady=(10, 0))
 
         # --- Réglages ----------------------------------------------------------
@@ -389,6 +394,9 @@ class App(ctk.CTk):
 
         import masque_ui
         self.page_masque = masque_ui.PageMasque(self, self, globals())
+        if mode == "masque":
+            self.onglet.set("Masque IA")
+            self.after(0, lambda: self.changer_onglet("Masque IA"))
 
         self.appliquer_style("Rebond karaoké")
         self.afficher_style()
@@ -644,27 +652,32 @@ class App(ctk.CTk):
         self.occupe(False)
 
 
-def deja_ouverte():
+def deja_ouverte(port):
     """Une seule fenêtre : si le port est pris, l'application tourne déjà."""
     import socket
     global _verrou
     _verrou = socket.socket()
     try:
-        _verrou.bind(("127.0.0.1", 47813))
+        _verrou.bind(("127.0.0.1", port))
         return False
     except OSError:
         return True
 
 
 if __name__ == "__main__":
-    if deja_ouverte():
+    import argparse
+    arguments = argparse.ArgumentParser()
+    arguments.add_argument("--mode", choices=["tout", "soustitres", "masque"], default="tout")
+    mode = arguments.parse_args().mode
+    # une seule fenêtre par mode (les deux fenêtres séparées peuvent cohabiter)
+    if deja_ouverte({"tout": 47813, "soustitres": 47816, "masque": 47817}[mode]):
         sys.exit(0)
     if not os.path.exists(PYTHON):
-        messagebox.showerror("farfavinci", "Installation manquante : lance installer.ps1")
+        messagebox.showerror("farfavinci", "Installation manquante : lance Installer.bat")
         sys.exit(1)
     try:  # icône propre dans la barre des tâches (au lieu de celle de Python)
         import ctypes
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Farfatechs.farfavinci")
     except Exception:
         pass
-    App().mainloop()
+    App(mode).mainloop()
