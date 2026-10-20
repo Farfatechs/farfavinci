@@ -85,11 +85,12 @@ class PageMasque(ctk.CTkScrollableFrame):
         l = ctk.CTkFrame(c1, fg_color="transparent")
         l.pack(fill="x", padx=18, pady=(0, 6))
         self.b_clip = ctk.CTkButton(
-            l, text="Récupérer le clip sous la tête de lecture", height=36,
+            l, text="Récupérer les clips sélectionnés", height=36,
             font=U["police"](13, True), fg_color=U["BORD"], hover_color="#26324a",
             command=self.recuperer)
         self.b_clip.pack(side="left")
-        self.info = ctk.CTkLabel(c1, text="Place la tête de lecture de DaVinci sur un clip.",
+        self.info = ctk.CTkLabel(c1, text="Sélectionne un ou plusieurs clips sur la timeline : "
+                                          "ils formeront un seul masque.",
                                  font=U["police"](12), text_color=U["DOUX"], anchor="w",
                                  justify="left", wraplength=520)
         self.info.pack(fill="x", padx=18)
@@ -161,9 +162,15 @@ class PageMasque(ctk.CTkScrollableFrame):
             dossier = os.path.join(TRAVAIL, f"masque_{int(time.time())}")
             os.makedirs(dossier, exist_ok=True)
             self.app.msg("Préparation des images du clip…", 0)
-            res = moteur.requete("charger", video=info["fichier"],
-                                 debut=int(info["source_debut"]), nb=int(info["duree"]),
-                                 dossier=dossier)
+            # clips sélectionnés mis bout à bout (sans fichier = trou entre deux clips)
+            segments = []
+            for i in range(1, int(info["nb_segments"]) + 1):
+                k = f"seg{i}_"
+                seg = {"nb": int(info[k + "duree"])}
+                if info.get(k + "fichier"):
+                    seg.update(video=info[k + "fichier"], debut=int(info[k + "source_debut"]))
+                segments.append(seg)
+            res = moteur.requete("charger", segments=segments, dossier=dossier)
             info.update(n=res["n"], w=res["w"], h=res["h"], proxy=res["proxy"], dossier=dossier)
             self.clip = info
             k = min(max(0, int(float(info.get("tete", 0)))), res["n"] - 1)
@@ -176,8 +183,12 @@ class PageMasque(ctk.CTkScrollableFrame):
 
     def _clip_pret(self, k):
         c = self.clip
-        plage = "   ·   sélection I / O" if self.selection.get() else ""
-        self.info.configure(text=f"{c['nom']}   ·   {c['w']}×{c['h']}   ·   {c['n']} images{plage}",
+        nb = int(c.get("nb_clips", 1))
+        nom = c["nom"] if nb == 1 else f"{nb} clips réunis"
+        if c.get("origine") == "tête de lecture":
+            nom += " (aucune sélection : clip sous la tête de lecture)"
+        plage = "   ·   points I / O" if self.selection.get() else ""
+        self.info.configure(text=f"{nom}   ·   {c['w']}×{c['h']}   ·   {c['n']} images{plage}",
                             text_color=self.ui["TEXTE"])
         self.curseur.configure(state="normal", from_=0, to=max(1, c["n"] - 1),
                                number_of_steps=max(1, c["n"] - 1))

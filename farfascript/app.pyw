@@ -23,6 +23,8 @@ LANGUES = {"Français": "fr", "English": "en", "Español": "es", "Deutsch": "de"
 # Polices Windows qui contiennent les caractères de ces langues
 POLICE_LANGUE = {"ja": "Yu Gothic", "zh": "Microsoft YaHei", "ko": "Malgun Gothic",
                  "th": "Leelawadee UI", "hi": "Nirmala UI"}
+# Partie de la timeline à transcrire
+PLAGES = {"Toute la timeline": "all", "Clips sélectionnés": "selection", "Points I / O": "inout"}
 MODES = {"Bloc complet": "bloc", "Phrase par phrase": "phrase", "Mot par mot": "mot"}
 ANIMATIONS = ["Aucune", "Fondu", "Pop", "Rebond", "Glissement"]
 SENS = {"Entrée": 0, "Sortie": 1, "Les deux": 2}
@@ -224,7 +226,7 @@ class App(ctk.CTk):
         self.mode = ctk.StringVar(value="Phrase par phrase")
         self.source = ctk.StringVar(value="Timeline DaVinci")
         self.sortie = ctk.StringVar(value="Titres animés")
-        self.selection = ctk.BooleanVar(value=False)
+        self.plage = ctk.StringVar(value="Toute la timeline")
         self.remplacer = ctk.BooleanVar(value=True)
         self.fichier = ctk.StringVar()
         self.decalage = ctk.StringVar(value="0")
@@ -287,8 +289,8 @@ class App(ctk.CTk):
         segment(self.p_timeline, ["Sous-titres simples", "Titres animés"], self.sortie,
                 command=lambda _v: self.afficher_style(), accent=False
                 ).pack(fill="x", pady=(0, 10))
-        interrupteur(self.p_timeline, "Seulement la sélection (points I / O)",
-                     self.selection).pack(anchor="w", pady=4)
+        segment(self.p_timeline, list(PLAGES), self.plage,
+                accent=False).pack(fill="x", pady=(0, 10))
         interrupteur(self.p_timeline, "Remplacer les anciens sous-titres",
                      self.remplacer).pack(anchor="w", pady=4)
 
@@ -587,7 +589,7 @@ class App(ctk.CTk):
             self.msg("Rendu de l'audio de la timeline…", 4)
             os.makedirs(TRAVAIL, exist_ok=True)
             rendu = bridge.envoyer("render_audio", timeout=3600, dir=TRAVAIL,
-                                   range="inout" if self.selection.get() else "all")
+                                   range=PLAGES[self.plage.get()])
             decalage = float(rendu.get("decalage", 0))
             # nom unique : DaVinci réutilise un SRT déjà importé sous le même chemin
             base = os.path.join(TRAVAIL, f"sous_titres_{MODES[self.mode.get()]}_{int(time.time())}")

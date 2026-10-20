@@ -2,7 +2,9 @@
 
 Protocole : une commande JSON par ligne sur stdin, réponses sur stdout en
 lignes préfixées par "@" (JSON). Commandes :
-  charger   {video, debut, nb, dossier}  -> décode le clip en images allégées
+  charger   {segments, dossier}          -> décode les clips en images allégées
+                                            segments : [{video, debut, nb}, ...] mis
+                                            bout à bout (sans video = images noires)
   apercu    {frame, points}              -> masque instantané sur une image
   propager  {frame, points, sortie}      -> suit le sujet sur tout le clip et
                                             écrit détourage (alpha) + cache N&B
@@ -40,17 +42,22 @@ class Moteur:
         self.clip = None
 
     # -- lecture du clip --------------------------------------------------------
-    def images(self, debut, nb):
-        """Images [debut, debut + nb) du clip, en pleine résolution (PIL RGB)."""
-        c = self.clip
-        with av.open(c["video"]) as conteneur:
+    @staticmethod
+    def fps_de(video):
+        with av.open(video) as conteneur:
+            flux = conteneur.streams.video[0]
+            return flux.average_rate or flux.guessed_rate or Fraction(25)
+
+    @staticmethod
+    def lire(video, fps, debut, nb):
+        """Images [debut, debut + nb) d'un fichier, en pleine résolution (PIL RGB)."""
+        with av.open(video) as conteneur:
             flux = conteneur.streams.video[0]
             flux.thread_type = "AUTO"
-            t = debut / c["fps"]
-            conteneur.seek(int(t / flux.time_base), stream=flux, backward=True)
+            conteneur.seek(int(debut / fps / flux.time_base), stream=flux, backward=True)
             rendu = 0
             for image in conteneur.decode(flux):
-                idx = round(image.time * c["fps"]) if image.time is not None else None
+                idx = round(image.time * fps) if image.time is not None else None
                 if idx is not None and idx < debut:
                     continue
                 yield image.to_image()
@@ -58,21 +65,47 @@ class Moteur:
                 if rendu >= nb:
                     return
 
-    def charger(self, video, debut, nb, dossier):
-        with av.open(video) as conteneur:
-            flux = conteneur.streams.video[0]
-            fps = flux.average_rate or flux.guessed_rate or Fraction(25)
-        self.clip = {"video": video, "debut": int(debut), "nb": int(nb), "fps": float(fps),
-                     "fps_frac": fps, "dossier": dossier}
+    def images(self):
+        """Toutes les images des segments bout à bout, à la taille du 1er clip.
+        Renvoie (image, vide) : vide = trou entre deux clips (image noire)."""
+        c = self.clip
+        for seg in c["segments"]:
+            rendu = 0
+            if seg.get("video"):
+                for img in self.lire(seg["video"], seg["fps"], seg["debut"], seg["nb"]):
+                    if img.size != (c["w"], c["h"]):
+                        img = img.resize((c["w"], c["h"]), Image.BILINEAR)
+                    yield img, False
+                    rendu += 1
+            # trou, ou fichier plus court que prévu : on complète en noir pour rester calé
+            while rendu < seg["nb"]:
+                yield Image.new("RGB", (c["w"], c["h"])), True
+                rendu += 1
+
+    def charger(self, segments, dossier):
+        segments = [dict(s, debut=int(s.get("debut", 0)), nb=int(s["nb"])) for s in segments]
+        fps = None
+        for seg in segments:
+            if seg.get("video"):
+                f = self.fps_de(seg["video"])
+                seg["fps"] = float(f)
+                fps = fps or f
+        if fps is None:
+            raise ValueError("Aucun fichier vidéo dans la sélection")
+        premier = next(s for s in segments if s.get("video"))
+        nb = sum(s["nb"] for s in segments)
+        self.clip = {"video": premier["video"], "segments": segments, "nb": nb,
+                     "fps": float(fps), "fps_frac": fps, "dossier": dossier}
+        # taille de référence : la 1re image du 1er clip réel
+        img0 = next(self.lire(premier["video"], premier["fps"], premier["debut"], 1))
+        self.clip["w"], self.clip["h"] = img0.size
+        self.clip["pw"] = LARGEUR_PROXY
+        self.clip["ph"] = round(img0.size[1] * LARGEUR_PROXY / img0.size[0] / 2) * 2
         proxy = os.path.join(dossier, "proxy")
         shutil.rmtree(proxy, ignore_errors=True)
         os.makedirs(proxy)
         n = 0
-        for i, img in enumerate(self.images(int(debut), int(nb))):
-            if i == 0:
-                self.clip["w"], self.clip["h"] = img.size
-                self.clip["pw"] = LARGEUR_PROXY
-                self.clip["ph"] = round(img.size[1] * LARGEUR_PROXY / img.size[0] / 2) * 2
+        for i, (img, _trou) in enumerate(self.images()):
             img.resize((self.clip["pw"], self.clip["ph"]), Image.BILINEAR).save(
                 os.path.join(proxy, f"{i:05d}.jpg"), quality=92)
             n = i + 1
@@ -166,6 +199,8 @@ class Moteur:
         # Écriture pleine résolution : détourage ProRes 4444 (alpha) + cache N&B ProRes 422
         os.makedirs(sortie, exist_ok=True)
         nom = os.path.splitext(os.path.basename(c["video"]))[0]
+        if len({s.get("video") for s in c["segments"] if s.get("video")}) > 1:
+            nom += "_multi"  # plusieurs clips réunis dans un seul masque
         f_detour = os.path.join(sortie, f"{nom}_detourage.mov")
         f_cache = os.path.join(sortie, f"{nom}_cache.mov")
         w, h = c["w"] - c["w"] % 2, c["h"] - c["h"] % 2
@@ -177,9 +212,10 @@ class Moteur:
             flux.options = {"profile": profil, "vendor": "apl0"}
             sorties.append((cont, flux, fmt))
         vide = np.zeros((c["ph"], c["pw"]), np.uint8)
-        for i, img in enumerate(self.images(c["debut"], c["nb"])):
+        for i, (img, trou) in enumerate(self.images()):
             img = img.crop((0, 0, w, h))
-            alpha = Image.fromarray(resultats.get(i, vide)).resize((w, h), Image.BILINEAR)
+            # dans un trou entre deux clips : rien à garder
+            alpha = Image.fromarray(vide if trou else resultats.get(i, vide)).resize((w, h), Image.BILINEAR)
             alpha = alpha.filter(ImageFilter.GaussianBlur(0.8))
             rgba = img.copy()
             rgba.putalpha(alpha)

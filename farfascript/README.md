@@ -11,13 +11,14 @@ graphique. Fait partie de [farfavinci](../), mais s'installe et fonctionne **seu
 | Système | Windows 10 / 11 (64 bits) | Windows 11 Pro |
 | Carte graphique | NVIDIA conseillée (sans NVIDIA : processeur, beaucoup plus lent) | RTX 4060 Ti 8 Go |
 | Mémoire graphique | 4 Go conseillés | 8 Go |
-| DaVinci Resolve | 21.x gratuit | 21.1.1 |
+| DaVinci Resolve | 21.0.4 ou plus récent, gratuit | 21.1.1 |
 | Python | 3.12 exactement | 3.12.10 |
 | Espace disque | environ 6 Go | |
 
 ## Fonctionnalités
 
-- Transcription de **toute la timeline** ou de la **sélection I / O**
+- Transcription de **toute la timeline**, des **clips sélectionnés** (du premier au dernier,
+  en un seul rendu) ou des **points I / O**
 - Découpage : **bloc complet**, **phrase par phrase**, **mot par mot**
 - **Sous-titres simples** (piste de sous-titres) ou **titres animés** (piste vidéo 3 « Sous-titres »)
 - **Styles en un clic** : Rebond karaoké, Rebond mot à mot, Bulle, Néon, Glissement, Élégant

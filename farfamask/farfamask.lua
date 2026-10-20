@@ -112,23 +112,85 @@ local function clip_sous_tete(timeline, tete)
     return nil
 end
 
-function commandes.clip_courant(req)
-    local _, timeline = contexte()
-    local fps = fps_de(timeline)
-    local item = clip_sous_tete(timeline, tc_en_images(timeline:GetCurrentTimecode(), fps))
-    if not item then
-        error("Aucun clip vidéo sous la tête de lecture : place-la sur un clip (page Edit)")
-    end
-    local chemin, mpi = fichier_de(item)
+local function piste_de(item)
+    local ok, ti = pcall(function() return item:GetTrackTypeAndIndex() end)
+    if ok and type(ti) == "table" then return ti[1], tonumber(ti[2]) or 1 end
+    return "video", 1
+end
+
+local function source_debut(item)
     local ok, src = pcall(function() return item:GetSourceStartFrame() end)
     if not ok or not src then
         ok, src = pcall(function() return item:GetLeftOffset() end)
     end
-    local piste = 1
-    pcall(function() piste = item:GetTrackTypeAndIndex()[2] end)
+    return tonumber(src) or 0
+end
+
+-- Clips vidéo sélectionnés sur la timeline (DaVinci 21.0.4+), avec un vrai fichier
+local function clips_selectionnes(timeline)
+    local ok, sel = pcall(function() return timeline:GetSelectedClips() end)
+    local res = {}
+    if ok and type(sel) == "table" then
+        for _, it in pairs(sel) do
+            if piste_de(it) == "video" and fichier_de(it) then res[#res + 1] = it end
+        end
+    end
+    return res
+end
+
+-- Tous les clips vidéo (pistes actives) qui touchent [debut, fin)
+local function clips_entre(timeline, debut, fin)
+    local res = {}
+    for piste = 1, timeline:GetTrackCount("video") do
+        if timeline:GetIsTrackEnabled("video", piste) ~= false then
+            for _, it in ipairs(timeline:GetItemListInTrack("video", piste) or {}) do
+                if it:GetStart() < fin and debut < it:GetEnd() and fichier_de(it) then
+                    res[#res + 1] = it
+                end
+            end
+        end
+    end
+    return res
+end
+
+-- Découpe [debut, fin) en segments : à chaque instant, le clip de la piste la plus
+-- haute ; les trous entre clips deviennent des segments sans fichier (images noires).
+local function segments_de(items, debut, fin)
+    local bornes, vu = { debut, fin }, { [debut] = true, [fin] = true }
+    for _, it in ipairs(items) do
+        for _, b in ipairs({ it:GetStart(), it:GetEnd() }) do
+            if b > debut and b < fin and not vu[b] then
+                vu[b] = true
+                bornes[#bornes + 1] = b
+            end
+        end
+    end
+    table.sort(bornes)
+    local segs = {}
+    for i = 1, #bornes - 1 do
+        local a, b = bornes[i], bornes[i + 1]
+        local choix, haut = nil, -1
+        for _, it in ipairs(items) do
+            local _, p = piste_de(it)
+            if it:GetStart() <= a and b <= it:GetEnd() and p > haut then choix, haut = it, p end
+        end
+        local der = segs[#segs]
+        if der and der.item == choix then
+            der.fin = b  -- même clip que le segment précédent : on prolonge
+        else
+            segs[#segs + 1] = { item = choix, debut = a, fin = b }
+        end
+    end
+    return segs
+end
+
+function commandes.clip_courant(req)
+    local _, timeline = contexte()
+    local fps = fps_de(timeline)
     local tete = tc_en_images(timeline:GetCurrentTimecode(), fps)
-    -- Plage traitée : tout le clip, ou seulement sa partie entre les points I / O
-    local debut, fin = item:GetStart(), item:GetEnd()
+    local items = clips_selectionnes(timeline)
+    local origine = "sélection"
+    local marques
     if req.range == "inout" then
         local m = lire_marques(timeline)
         m = m.video or m.audio or {}
@@ -136,24 +198,62 @@ function commandes.clip_courant(req)
             error("Pose d'abord un point d'entrée (I) et de sortie (O) sur la timeline")
         end
         local t0 = timeline:GetStartFrame()
-        local mi = m["in"] and (m["in"] + t0) or debut
-        local mo = m["out"] and (m["out"] + t0 + 1) or fin  -- le point O est inclus
-        debut, fin = math.max(debut, mi), math.min(fin, mo)
-        if fin <= debut then
-            error("Les points I / O ne recouvrent pas le clip sous la tête de lecture")
+        marques = {
+            m["in"] and (m["in"] + t0) or t0,
+            m["out"] and (m["out"] + t0 + 1) or timeline:GetEndFrame(),  -- le point O est inclus
+        }
+    end
+    if #items == 0 then
+        if marques then
+            -- rien de sélectionné : tous les clips entre les points I / O
+            items = clips_entre(timeline, marques[1], marques[2])
+            origine = "I / O"
+        else
+            local it = clip_sous_tete(timeline, tete)
+            items = it and { it } or {}
+            origine = "tête de lecture"
         end
     end
-    local decal = debut - item:GetStart()
-    return {
-        fichier = chemin,
-        nom = tostring(item:GetName()),
-        source_debut = tostring(math.floor((tonumber(src) or 0) + decal + 0.5)),
-        duree = tostring(fin - debut),
+    if #items == 0 then
+        error("Aucun clip vidéo : sélectionne un ou plusieurs clips sur la timeline (page Edit)")
+    end
+
+    -- Plage traitée : du début du premier clip à la fin du dernier, coupée aux points I / O
+    local debut, fin = math.huge, -math.huge
+    for _, it in ipairs(items) do
+        debut, fin = math.min(debut, it:GetStart()), math.max(fin, it:GetEnd())
+    end
+    if marques then
+        debut, fin = math.max(debut, marques[1]), math.min(fin, marques[2])
+        if fin <= debut then
+            error("Les points I / O ne recouvrent pas les clips sélectionnés")
+        end
+    end
+
+    local res = {
         debut = tostring(debut),
-        piste = tostring(piste),
+        duree = tostring(fin - debut),
         tete = tostring(tete and (tete - debut) or 0),
-        fps_clip = tostring(mpi:GetClipProperty("FPS")),
+        nb_clips = tostring(#items),
+        origine = origine,
     }
+    local segs = segments_de(items, debut, fin)
+    res.nb_segments = tostring(#segs)
+    for i, s in ipairs(segs) do
+        local k = "seg" .. i .. "_"
+        res[k .. "duree"] = tostring(s.fin - s.debut)
+        if s.item then
+            local chemin = fichier_de(s.item)
+            local decal = s.debut - s.item:GetStart()
+            res[k .. "fichier"] = chemin
+            res[k .. "source_debut"] = tostring(math.floor(source_debut(s.item) + decal + 0.5))
+            res.nom = res.nom or tostring(s.item:GetName())
+        end
+    end
+    if not res.nom then
+        error("Les points I / O tombent dans un trou entre les clips sélectionnés")
+    end
+    return res
 end
 
 local NOM_DETOURAGE = "Détourage"

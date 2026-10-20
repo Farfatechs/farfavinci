@@ -12,7 +12,7 @@ graphique. Fait partie de [farfavinci](../), mais s'installe et fonctionne **seu
 | Carte graphique | **NVIDIA obligatoire** (CUDA), RTX série 20 ou plus récente conseillée | RTX 4060 Ti 8 Go |
 | Mémoire graphique | 6 Go conseillés | 8 Go |
 | Pilote NVIDIA | récent (2024 ou plus) | 617.42 |
-| DaVinci Resolve | 21.x gratuit | 21.1.1 |
+| DaVinci Resolve | 21.0.4 ou plus récent, gratuit | 21.1.1 |
 | Python | 3.12 exactement | 3.12.10 |
 | Espace disque | environ 6 Go (+ les vidéos de masque produites) | |
 
@@ -22,7 +22,9 @@ Sans carte NVIDIA, l'installeur s'arrête : farfamask ne peut pas fonctionner.
 
 - Sélection du sujet **au clic** (garder / exclure) ou **en l'encadrant** (cliquer-glisser)
 - Aperçu instantané, choix de l'image de départ
-- Suivi sur **tout le clip** ou la **sélection I / O**
+- Travaille sur les **clips sélectionnés** de la timeline : plusieurs clips donnent **un seul masque**
+  (piste la plus haute prioritaire en cas de chevauchement, trous entre clips laissés vides)
+- Option **points I / O** pour ne traiter qu'une partie, même à cheval sur plusieurs clips
 - Résultat importé dans DaVinci (bin « Masques IA ») :
   - **sujet détouré** avec transparence (ProRes 4444), posé sur la piste vidéo 2 « Détourage »
   - **cache noir et blanc** (ProRes 422) pour la page **Color**
@@ -40,7 +42,8 @@ Tout est installé dans `%LOCALAPPDATA%\farfamask` ; ce dossier peut ensuite êt
 1. Dans DaVinci : **Espace de travail > Scripts > farfamask**.
    Rien ne s'affiche dans DaVinci (le pont tourne en arrière-plan) : l'application farfamask
    s'ouvre toute seule. À relancer une fois par session de DaVinci.
-2. Place la tête de lecture sur un clip, puis **Récupérer le clip** (option I / O possible).
+2. Sélectionne un ou plusieurs clips sur la timeline, puis **Récupérer les clips sélectionnés**
+   (option I / O possible ; sans sélection : clips entre les points I / O, sinon clip sous la tête de lecture).
 3. **Clic** sur le sujet pour le garder, **clic droit** pour exclure une zone, ou
    **cliquer-glisser** pour l'encadrer (idéal pour une photo, un écran, un tableau).
 4. **Suivre le sujet et créer le masque**.

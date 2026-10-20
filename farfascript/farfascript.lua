@@ -105,6 +105,22 @@ function commandes.render_audio(req)
         reglages.MarkIn = (m["in"] or 0) + debut
         reglages.MarkOut = m["out"] and (m["out"] + debut) or timeline:GetEndFrame()
         decalage = (reglages.MarkIn - debut) / fps
+    elseif req.range == "selection" then
+        -- Clips sélectionnés (DaVinci 21.0.4+) : un seul rendu, du début du premier
+        -- clip à la fin du dernier, quelles que soient leurs pistes (vidéo ou audio)
+        local ok, sel = pcall(function() return timeline:GetSelectedClips() end)
+        local mi, mo = math.huge, -math.huge
+        if ok and type(sel) == "table" then
+            for _, it in pairs(sel) do
+                mi, mo = math.min(mi, it:GetStart()), math.max(mo, it:GetEnd())
+            end
+        end
+        if mo <= mi then
+            error("Aucun clip sélectionné : sélectionne un ou plusieurs clips sur la timeline")
+        end
+        reglages.MarkIn = mi
+        reglages.MarkOut = mo - 1  -- GetEnd est exclu, MarkOut est inclus
+        decalage = (mi - debut) / fps
     else
         reglages.MarkIn = debut
         reglages.MarkOut = timeline:GetEndFrame()
